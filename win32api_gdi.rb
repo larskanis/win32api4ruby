@@ -49,6 +49,28 @@ class Win32ApiGDI < Win32ApiBase
   # different arguments are calling different functions, throwing wacky errors
   #API WRAPPERS
   # --------------------------------------------------------------------------------------------------------------
+  @@CreateCompatibleBitmap = GDI32['CreateCompatibleBitmap', 'LLLL']
+  def create_compatible_bitmap(hdc, nWidth, nHeight)
+        #~ HBITMAP CreateCompatibleBitmap(
+          #~ __in  HDC hdc,
+          #~ __in  int nWidth,
+          #~ __in  int nHeight
+        #~ );
+    api_call(@@CreateCompatibleBitmap, hdc, nWidth, nHeight)
+  end
+  # --------------------------------------------------------------------------------------------------------------
+  @@CreateBitmap = GDI32['CreateBitmap', 'LLLLLP']
+  def create_bitmap(nWidth, nHeight, cPlanes, cBitsPerPel, lpvBits)
+      #~ HBITMAP CreateBitmap(
+        #~ __in  int nWidth,
+        #~ __in  int nHeight,
+        #~ __in  UINT cPlanes,
+        #~ __in  UINT cBitsPerPel,
+        #~ __in  const VOID *lpvBits
+      #~ );
+    api_call(@@CreateBitmap, nWidth, nHeight, cPlanes, cBitsPerPel, lpvBits)
+  end
+  # --------------------------------------------------------------------------------------------------------------
   @@BitBlt = GDI32['BitBlt', 'L'*10]
   def bit_blt(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc, dwRop)
       #~ BOOL BitBlt(
@@ -99,12 +121,12 @@ class Win32ApiGDI < Win32ApiBase
   end
   # --------------------------------------------------------------------------------------------------------------
   @@CreateCompatibleDC = GDI32['CreateCompatibleDC', 'LL']
-  def create_compatible_dc(x)
+  def create_compatible_dc(hdc)
       #~ HDC CreateCompatibleDC(
         #~ __in  HDC hdc
       #~ );
     #~ check(hMovableMemory,Integer)
-    api_call(@@CreateCompatibleDC, x)
+    api_call(@@CreateCompatibleDC, hdc)
   end
   # --------------------------------------------------------------------------------------------------------------
   @@CreateDC = GDI32['CreateDC', 'LPPPP']
