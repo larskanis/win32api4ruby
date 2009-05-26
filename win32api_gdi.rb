@@ -49,14 +49,16 @@ class Win32ApiGDI < Win32ApiBase
   # different arguments are calling different functions, throwing wacky errors
   #API WRAPPERS
   # --------------------------------------------------------------------------------------------------------------
-  @@CreateCompatibleBitmap = GDI32['CreateCompatibleBitmap', 'LLLL']
+  @@CreateCompatibleBitmap = GDI32['CreateCompatibleBitmap', 'LLL']
   def create_compatible_bitmap(hdc, nWidth, nHeight)
         #~ HBITMAP CreateCompatibleBitmap(
           #~ __in  HDC hdc,
           #~ __in  int nWidth,
           #~ __in  int nHeight
         #~ );
-    api_call(@@CreateCompatibleBitmap, hdc, nWidth, nHeight)
+    exception_for_0{
+      api_call(@@CreateCompatibleBitmap, hdc, nWidth, nHeight)
+    }
   end
   # --------------------------------------------------------------------------------------------------------------
   @@CreateBitmap = GDI32['CreateBitmap', 'LLLLLP']
@@ -68,7 +70,9 @@ class Win32ApiGDI < Win32ApiBase
         #~ __in  UINT cBitsPerPel,
         #~ __in  const VOID *lpvBits
       #~ );
-    api_call(@@CreateBitmap, nWidth, nHeight, cPlanes, cBitsPerPel, lpvBits)
+    exception_for_0{
+      api_call(@@CreateBitmap, nWidth, nHeight, cPlanes, cBitsPerPel, lpvBits)
+    }
   end
   # --------------------------------------------------------------------------------------------------------------
   @@BitBlt = GDI32['BitBlt', 'L'*10]
@@ -84,7 +88,9 @@ class Win32ApiGDI < Win32ApiBase
         #~ __in  int nYSrc,
         #~ __in  DWORD dwRop
       #~ );
-    api_call(@@BitBlt, hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc, dwRop)
+    exception_for_0{
+      api_call(@@BitBlt, hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc, dwRop)
+    }
   end
   # --------------------------------------------------------------------------------------------------------------
   @@TextOut = GDI32['TextOut', 'LLLLPL']
@@ -96,7 +102,9 @@ class Win32ApiGDI < Win32ApiBase
         #~ __in  LPCTSTR lpString,
         #~ __in  int cbString
       #~ );
-    api_call(@@TextOut, hdc, nXStart, nYStart, lpString, cbString)
+    exception_for_0{
+      api_call(@@TextOut, hdc, nXStart, nYStart, lpString, cbString)
+    }
   end
   # --------------------------------------------------------------------------------------------------------------
   @@SelectObject = GDI32['SelectObject', 'LLL']
@@ -106,7 +114,9 @@ class Win32ApiGDI < Win32ApiBase
         #~ HGDIOBJ hgdiobj
       #~ ); 
     #~ check(hMovableMemory,Integer)
-    api_call(@@SelectObject, hdc, hgdiobj)
+    exception_for_0{
+      api_call(@@SelectObject, hdc, hgdiobj)
+    }
   end
   # --------------------------------------------------------------------------------------------------------------
   @@GetObject = GDI32['GetObject', 'LLLp']
@@ -117,7 +127,21 @@ class Win32ApiGDI < Win32ApiBase
         #~ __out  LPVOID lpvObject
       #~ );
     #~ check(hMovableMemory,Integer)
-    api_call(@@GetObject, hgdiobj, cbBuffer, lpvObject)
+    exception_for_0{
+      api_call(@@GetObject, hgdiobj, cbBuffer, lpvObject)
+    }
+  end
+  # --------------------------------------------------------------------------------------------------------------
+  @@DeleteDC = GDI32['DeleteDC', 'LL']
+  # nur bei CreateDC verwenden
+  def delete_dc(hDC)
+      #~ BOOL DeleteDC(
+        #~ __in  HDC hdc
+      #~ );
+
+    exception_for_0{
+      api_call(@@DeleteDC, hDC)
+    }
   end
   # --------------------------------------------------------------------------------------------------------------
   @@CreateCompatibleDC = GDI32['CreateCompatibleDC', 'LL']
@@ -126,9 +150,12 @@ class Win32ApiGDI < Win32ApiBase
         #~ __in  HDC hdc
       #~ );
     #~ check(hMovableMemory,Integer)
-    api_call(@@CreateCompatibleDC, hdc)
+    exception_for_0{
+      api_call(@@CreateCompatibleDC, hdc)
+    }
   end
   # --------------------------------------------------------------------------------------------------------------
+  #~ @@CreateDC = Win32API.new('gdi32', 'CreateDC', ['P','P', 'P', 'P'], 'N')
   @@CreateDC = GDI32['CreateDC', 'LPPPP']
   def create_dc(lpszDriver, lpszDevice, lpszOutput, lpInitData)
        #~ HDC CreateDC(
@@ -139,28 +166,36 @@ class Win32ApiGDI < Win32ApiBase
     #~ );
 
     #~ hDC = CreateDC( 0, sPrnName, 0, dm );
-    api_call(@@CreateDC, lpszDriver, lpszDevice, lpszOutput, lpInitData)
+    exception_for_0{
+      api_call(@@CreateDC, lpszDriver, lpszDevice, lpszOutput, lpInitData)
+    }
   end
   # --------------------------------------------------------------------------------------------------------------
   @@StartDoc = Win32API.new('gdi32', 'StartDoc', ['N','P'], 'N')
   #~ @@StartDoc = GDI32['StartDoc', 'LLP']
   def start_doc(hPrinter, pDocInfo)
     check(hPrinter, Integer); check(pDocInfo, String)
-    api_call(@@StartDoc, hPrinter, pDocInfo)
+    exception_for_0{
+      api_call(@@StartDoc, hPrinter, pDocInfo)
+    }
   end
   # --------------------------------------------------------------------------------------------------------------
   @@EndDoc = Win32API.new('gdi32', 'EndDoc', ['N'], 'N')
   #~ @@EndDoc = GDI32['EndDoc', 'LL']
   def end_doc(hPrinter)
     check(hPrinter, Integer)
-    api_call(@@EndDoc, hPrinter)
+    exception_for_0{
+      api_call(@@EndDoc, hPrinter)
+    }
   end
   # --------------------------------------------------------------------------------------------------------------
   @@StartPage = Win32API.new('gdi32', 'StartPage', ['N'],  'N')
   #~ @@StartPage = GDI32['StartPage', 'LL']
   def start_page(hPrinter)
     check(hPrinter, Integer)
-    api_call(@@StartPage, hPrinter)
+    exception_for_0{
+      api_call(@@StartPage, hPrinter)
+    }
   end
   # --------------------------------------------------------------------------------------------------------------
   @@EndPage = Win32API.new('gdi32', 'EndPage', ['N'], 'N')
@@ -170,7 +205,9 @@ class Win32ApiGDI < Win32ApiBase
         #~ __in  HDC hdc
       #~ );
     check(hPrinter, Integer)
-    api_call(@@EndPage, hPrinter)
+    exception_for_0{
+      api_call(@@EndPage, hPrinter)
+    }
   end
 end
 
