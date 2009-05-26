@@ -44,14 +44,18 @@ class Winspool < Win32ApiBase
     # erst einmal ermitteln, wieviel Speicher gebraucht wird
     cbBuf = 0
     pPrinterEnum = "\0" * cbBuf # Buffer
-    api_call(@@EnumPrinters, pr, nil, pi, pPrinterEnum, 0, pcbNeeded, pcReturned)
+    exception_for_0{
+      api_call(@@EnumPrinters, pr, nil, pi, pPrinterEnum, 0, pcbNeeded, pcReturned)
+    }
     
     # und dann die Infos holen
     cbBuf = pcbNeeded.unpack("V")[0] + 1
     
     pPrinterEnum = "\0" * cbBuf # Buffer für die Datenübergabe aufbereiten
     
-    api_call(@@EnumPrinters, pr, nil, pi, pPrinterEnum, cbBuf, pcbNeeded, pcReturned)
+    exception_for_0{
+      api_call(@@EnumPrinters, pr, nil, pi, pPrinterEnum, cbBuf, pcbNeeded, pcReturned)
+    }
     
     #~ p "Laenge des übergebenen Puffers: #{cbBuf}"
     needed = pcbNeeded.unpack("V")[0]
@@ -189,48 +193,62 @@ class Winspool < Win32ApiBase
     check(phPrinter,String) #handle to string.. return value
     #phPrinter is the PRINTER_DEFAULTS structure.. 0 for default
     # since we want to send through a zero for default, can't enforce string check...
-    api_call(@@OpenPrinter, pPrinterName, phPrinter, pDefault)
+    exception_for_0{
+      api_call(@@OpenPrinter, pPrinterName, phPrinter, pDefault)
+    }
   end
   # --------------------------------------------------------------------------------------------------------------
   @@ClosePrinter = Win32API.new('winspool.drv', 'ClosePrinter', ['N'], 'N')
   #~ @@ClosePrinter = WINSPOOL['ClosePrinter', 'LL']
   def close_printer(hPrinter)
     check(hPrinter,Integer)
-    api_call(@@ClosePrinter, hPrinter)
+    exception_for_0{
+      api_call(@@ClosePrinter, hPrinter)
+    }
   end
   # --------------------------------------------------------------------------------------------------------------
   @@AbortPrinter = Win32API.new('winspool.drv', 'AbortPrinter', ['N'], 'N')
   def abort_printer(hPrinter)
     check(hPrinter,Integer)
-    api_call(@@AbortPrinter, hPrinter)
+    exception_for_0{
+      api_call(@@AbortPrinter, hPrinter)
+    }
   end
   # --------------------------------------------------------------------------------------------------------------
   @@StartDocPrinter = Win32API.new('winspool.drv', 'StartDocPrinter', ['N','N','P'],  'N')
   #~ @@StartDocPrinter = WINSPOOL['StartDocPrinter', 'LLLP']
   def start_doc_printer(hPrinter, level, pDocInfo)
     check(hPrinter, Integer); check(level, Integer); check(pDocInfo, String)
-    api_call(@@StartDocPrinter, hPrinter, level, pDocInfo)
+    exception_for_0{
+      api_call(@@StartDocPrinter, hPrinter, level, pDocInfo)
+    }
   end
   # --------------------------------------------------------------------------------------------------------------
   @@EndDocPrinter = Win32API.new('winspool.drv', 'EndDocPrinter', ['N'], 'N')
   #~ @@EndDocPrinter = WINSPOOL['EndDocPrinter', 'LL']
   def end_doc_printer(hPrinter)
     check(hPrinter, Integer)
-    api_call(@@EndDocPrinter, hPrinter)
+    exception_for_0{
+      api_call(@@EndDocPrinter, hPrinter)
+    }
   end
   # --------------------------------------------------------------------------------------------------------------
   @@StartPagePrinter = Win32API.new('winspool.drv', 'StartPagePrinter', ['N'],  'N')
   #~ @@StartPagePrinter = WINSPOOL['StartPagePrinter', 'LL']
   def start_page_printer(hPrinter)
     check(hPrinter, Integer)
-    api_call(@@StartPagePrinter, hPrinter)
+    exception_for_0{
+      api_call(@@StartPagePrinter, hPrinter)
+    }
   end
   # --------------------------------------------------------------------------------------------------------------
   @@EndPagePrinter = Win32API.new('winspool.drv', 'EndPagePrinter', ['N'], 'N')
   #~ @@EndPagePrinter = WINSPOOL['EndPagePrinter', 'LL']
   def end_page_printer(hPrinter)
     check(hPrinter, Integer)
-    api_call(@@EndPagePrinter, hPrinter)
+    exception_for_0{
+      api_call(@@EndPagePrinter, hPrinter)
+    }
   end
   # --------------------------------------------------------------------------------------------------------------
   @@WritePrinter = Win32API.new('winspool.drv', 'WritePrinter', ['N','P','N','P'],  'N')
@@ -244,7 +262,9 @@ class Winspool < Win32ApiBase
       #~ );
     check(hPrinter,Integer); check(pBuf,String);
     check(cdBuf,Integer);check(pcWritten,String)
-    api_call(@@WritePrinter, hPrinter, pBuf, cdBuf, pcWritten)
+    exception_for_0{
+      api_call(@@WritePrinter, hPrinter, pBuf, cdBuf, pcWritten)
+    }
   end
   # --------------------------------------------------------------------------------------------------------------
 end
