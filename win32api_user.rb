@@ -55,7 +55,9 @@ class Win32ApiUser  < Win32ApiBase
           #~ int cyDesired,
           #~ UINT fuLoad
       #~ );
-    api_call(@@LoadImage, hinst, lpszName, uType, cxDesired, cyDesired, fuLoad)
+    exception_for_0{
+      api_call(@@LoadImage, hinst, lpszName, uType, cxDesired, cyDesired, fuLoad)
+    }
   end
 end
 
