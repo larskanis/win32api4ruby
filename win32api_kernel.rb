@@ -13,18 +13,22 @@ class Win32ApiKernel  < Win32ApiBase
   @@GlobalLock = Win32API.new('kernel32', 'GlobalLock', ['N'], 'N')
   def global_lock(hMovableMemory)
     check(hMovableMemory,Integer)
-    api_call(@@GlobalLock, hMovableMemory)
+    exception_for_0{
+      api_call(@@GlobalLock, hMovableMemory)
+    }
   end
   # --------------------------------------------------------------------------------------------------------------
   @@GlobalFree = Win32API.new('kernel32', 'GlobalFree', ['N'], 'N')
   def global_free(hMovableMemory)
     check(hMovableMemory,Integer)
-    api_call(@@GlobalFree, hMovableMemory)
+    exception_for_0{
+      api_call(@@GlobalFree, hMovableMemory)
+    }
   end
   # --------------------------------------------------------------------------------------------------------------
   @@GetLastError = Win32API.new('kernel32', 'GetLastError', [],  'N')
   def get_last_error()
-    api_call(@@GetLastError)
+      api_call(@@GetLastError)
   end
   # --------------------------------------------------------------------------------------------------------------
   @@FormatMessage = Win32API.new('kernel32', 'FormatMessage', ['N','P','N','N','P','N','P'], 'N')
@@ -35,7 +39,9 @@ class Win32ApiKernel  < Win32ApiBase
     check(dwLanguageID,Integer); check(lpBuffer,String);
     check(nSize,Integer);
     check(arguments,String)
-    api_call(@@FormatMessage, dwFlags, lpSource, dwMessageID, dwLanguageID, lpBuffer, nSize, arguments)
+    exception_for_0{
+      api_call(@@FormatMessage, dwFlags, lpSource, dwMessageID, dwLanguageID, lpBuffer, nSize, arguments)
+    }
   end
 end
 
