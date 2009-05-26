@@ -93,7 +93,9 @@ class Win32ApiComDlg  < Win32ApiBase
   @@PrintDlg = COMMDLG32['PrintDlg', 'Lp']
   def print_dlg(pPrintDlg)
     #~ check(pPrintDlg, String)
-    api_call(@@PrintDlg, pPrintDlg)
+    exception_for_0{
+      api_call(@@PrintDlg, pPrintDlg)
+    }
   end
 end
 
