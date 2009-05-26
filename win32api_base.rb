@@ -1,4 +1,30 @@
 class Win32ApiBase
+  @@GetLastError = Win32API.new('kernel32', 'GetLastError', [],  'N')
+  @@SetLastError = Win32API.new('kernel32', 'SetLastError', ['N'],  'N')
+  @@FormatMessage = Win32API.new('kernel32', 'FormatMessage', ['N','P','N','N','P','N','P'], 'N')
+  
+  class ApiError < RuntimeError
+  end
+  # --------------------------------------------------------------------------------------------------------------
+  def exception_for_0()
+    delete_errors
+    res = yield
+    if res == 0
+      raise ApiError, get_last_error_text
+    end
+    return res
+  end
+  # --------------------------------------------------------------------------------------------------------------
+  def format_message(dwFlags, lpSource, dwMessageID, dwLanguageID, lpBuffer, nSize, arguments)
+    check(dwFlags,Integer);
+    check(lpSource,String);
+    check(dwMessageID,Integer)
+    check(dwLanguageID,Integer); check(lpBuffer,String);
+    check(nSize,Integer);
+    check(arguments,String)
+    api_call(@@FormatMessage, dwFlags, lpSource, dwMessageID, dwLanguageID, lpBuffer, nSize, arguments)
+  end
+  # --------------------------------------------------------------------------------------------------------------
   def pointer_to_s(ptr)
     if ptr != 0
       ptr1 = DL::PtrData.new(ptr)
@@ -13,16 +39,21 @@ class Win32ApiBase
     #~ end
   end
   # --------------------------------------------------------------------------------------------------------------
-  def show_error
+  def get_last_error_text
     message = " " * 1024 #store 1kb space
     format_message(0x1000, '', get_last_error(), 0, message, 1024, '')
-    puts message[0 ... message.index("\0")]
+    message[0 ... message.index("\0")]
+  end
+  # --------------------------------------------------------------------------------------------------------------
+  def show_error
+    puts get_last_error_text
   end
   # --------------------------------------------------------------------------------------------------------------
   def api_call(apiFunction, *args)
     begin
       res = apiFunction.call(*args)
-      return res.kind_of?(Array) ? res[0] : res
+      erg = res.kind_of?(Array) ? res[0] : res
+      return erg
     rescue RuntimeError => e
       raise "#{e.class} #{e}: #{show_error}"
     end
@@ -41,5 +72,16 @@ class Win32ApiBase
     ensure
       show_error unless global_free(handle) == 0
     end
+  end
+  # --------------------------------------------------------------------------------------------------------------
+  def delete_errors
+      #~ void WINAPI SetLastError(
+        #~ __in  DWORD dwErrCode
+      #~ );
+    api_call(@@SetLastError, 0)
+  end
+  # --------------------------------------------------------------------------------------------------------------
+  def get_last_error()
+    api_call(@@GetLastError)
   end
 end
