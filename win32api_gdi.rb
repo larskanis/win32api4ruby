@@ -1,6 +1,4 @@
-if __FILE__ == $0
-  require 'Win32API'
-end
+require 'win32api_base'
 
 
 R2_BLACK = 1   #  0       
@@ -212,4 +210,5 @@ class Win32ApiGDI < Win32ApiBase
 end
 
 if __FILE__ == $0
+  Win32ApiGDI.new
 end
