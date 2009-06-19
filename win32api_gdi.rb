@@ -46,7 +46,8 @@ class Win32ApiGDI < Win32ApiBase
   # (through #check). This is to be consistent with the Win32API which will assume
   # different arguments are calling different functions, throwing wacky errors
   #API WRAPPERS
-  # --------------------------------------------------------------------------------------------------------------
+  #--------------------------------------------------------------------------------------------------------------
+  
   @@CreateCompatibleBitmap = GDI32['CreateCompatibleBitmap', 'LLL']
   def create_compatible_bitmap(hdc, nWidth, nHeight)
         #~ HBITMAP CreateCompatibleBitmap(
@@ -58,7 +59,8 @@ class Win32ApiGDI < Win32ApiBase
       api_call(@@CreateCompatibleBitmap, hdc, nWidth, nHeight)
     }
   end
-  # --------------------------------------------------------------------------------------------------------------
+  #--------------------------------------------------------------------------------------------------------------
+  
   @@CreateBitmap = GDI32['CreateBitmap', 'LLLLLP']
   def create_bitmap(nWidth, nHeight, cPlanes, cBitsPerPel, lpvBits)
       #~ HBITMAP CreateBitmap(
@@ -72,7 +74,8 @@ class Win32ApiGDI < Win32ApiBase
       api_call(@@CreateBitmap, nWidth, nHeight, cPlanes, cBitsPerPel, lpvBits)
     }
   end
-  # --------------------------------------------------------------------------------------------------------------
+  #--------------------------------------------------------------------------------------------------------------
+  
   @@BitBlt = GDI32['BitBlt', 'L'*10]
   def bit_blt(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc, dwRop)
       #~ BOOL BitBlt(
@@ -90,7 +93,8 @@ class Win32ApiGDI < Win32ApiBase
       api_call(@@BitBlt, hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc, dwRop)
     }
   end
-  # --------------------------------------------------------------------------------------------------------------
+  #--------------------------------------------------------------------------------------------------------------
+  
   @@TextOut = GDI32['TextOut', 'LLLLPL']
   def text_out(hdc, nXStart, nYStart, lpString, cbString)
       #~ BOOL TextOut(
@@ -104,7 +108,8 @@ class Win32ApiGDI < Win32ApiBase
       api_call(@@TextOut, hdc, nXStart, nYStart, lpString, cbString)
     }
   end
-  # --------------------------------------------------------------------------------------------------------------
+  #--------------------------------------------------------------------------------------------------------------
+  
   @@SelectObject = GDI32['SelectObject', 'LLL']
   def select_object(hdc, hgdiobj)
       #~ HGDIOBJ SelectObject(
@@ -116,7 +121,8 @@ class Win32ApiGDI < Win32ApiBase
       api_call(@@SelectObject, hdc, hgdiobj)
     }
   end
-  # --------------------------------------------------------------------------------------------------------------
+  #--------------------------------------------------------------------------------------------------------------
+  
   @@GetObject = GDI32['GetObject', 'LLLp']
   def get_object(hgdiobj, cbBuffer, lpvObject)
       #~ int GetObject(
@@ -129,7 +135,8 @@ class Win32ApiGDI < Win32ApiBase
       api_call(@@GetObject, hgdiobj, cbBuffer, lpvObject)
     }
   end
-  # --------------------------------------------------------------------------------------------------------------
+  #--------------------------------------------------------------------------------------------------------------
+  
   @@DeleteDC = GDI32['DeleteDC', 'LL']
   # nur bei CreateDC verwenden
   def delete_dc(hDC)
@@ -141,7 +148,21 @@ class Win32ApiGDI < Win32ApiBase
       api_call(@@DeleteDC, hDC)
     }
   end
-  # --------------------------------------------------------------------------------------------------------------
+  #--------------------------------------------------------------------------------------------------------------
+  
+  @@DeleteObject = GDI32['DeleteObject', 'LL']
+  # nur bei CreateDC verwenden
+  def delete_object(hDC)
+      #~ BOOL DeleteDC(
+        #~ __in  HDC hdc
+      #~ );
+
+    exception_for_0{
+      api_call(@@DeleteObject, hDC)
+    }
+  end
+  #--------------------------------------------------------------------------------------------------------------
+  
   @@CreateCompatibleDC = GDI32['CreateCompatibleDC', 'LL']
   def create_compatible_dc(hdc)
       #~ HDC CreateCompatibleDC(
@@ -152,7 +173,8 @@ class Win32ApiGDI < Win32ApiBase
       api_call(@@CreateCompatibleDC, hdc)
     }
   end
-  # --------------------------------------------------------------------------------------------------------------
+  #--------------------------------------------------------------------------------------------------------------
+  
   #~ @@CreateDC = Win32API.new('gdi32', 'CreateDC', ['P','P', 'P', 'P'], 'N')
   @@CreateDC = GDI32['CreateDC', 'LPPPP']
   def create_dc(lpszDriver, lpszDevice, lpszOutput, lpInitData)
@@ -168,7 +190,8 @@ class Win32ApiGDI < Win32ApiBase
       api_call(@@CreateDC, lpszDriver, lpszDevice, lpszOutput, lpInitData)
     }
   end
-  # --------------------------------------------------------------------------------------------------------------
+  #--------------------------------------------------------------------------------------------------------------
+  
   @@StartDoc = Win32API.new('gdi32', 'StartDoc', ['N','P'], 'N')
   #~ @@StartDoc = GDI32['StartDoc', 'LLP']
   def start_doc(hPrinter, pDocInfo)
@@ -177,7 +200,8 @@ class Win32ApiGDI < Win32ApiBase
       api_call(@@StartDoc, hPrinter, pDocInfo)
     }
   end
-  # --------------------------------------------------------------------------------------------------------------
+  #--------------------------------------------------------------------------------------------------------------
+  
   @@EndDoc = Win32API.new('gdi32', 'EndDoc', ['N'], 'N')
   #~ @@EndDoc = GDI32['EndDoc', 'LL']
   def end_doc(hPrinter)
@@ -186,7 +210,8 @@ class Win32ApiGDI < Win32ApiBase
       api_call(@@EndDoc, hPrinter)
     }
   end
-  # --------------------------------------------------------------------------------------------------------------
+  #--------------------------------------------------------------------------------------------------------------
+  
   @@StartPage = Win32API.new('gdi32', 'StartPage', ['N'],  'N')
   #~ @@StartPage = GDI32['StartPage', 'LL']
   def start_page(hPrinter)
@@ -195,7 +220,8 @@ class Win32ApiGDI < Win32ApiBase
       api_call(@@StartPage, hPrinter)
     }
   end
-  # --------------------------------------------------------------------------------------------------------------
+  #--------------------------------------------------------------------------------------------------------------
+  
   @@EndPage = Win32API.new('gdi32', 'EndPage', ['N'], 'N')
   #~ @@EndPage = GDI32['EndPage', 'LL']
   def end_page(hPrinter)
@@ -207,8 +233,53 @@ class Win32ApiGDI < Win32ApiBase
       api_call(@@EndPage, hPrinter)
     }
   end
+  #--------------------------------------------------------------------------------------------------------------
+  
+  #~ @@CreateFont = Win32API.new('gdi32', 'CreateFont', ['N'], 'N')
+  @@CreateFont = GDI32['CreateFont', 'LLLLLLLLLLLLLLP']
+  def create_font(nHeight, nWidth, nEscapement, nOrientation, fnWeight, fdwItalic, fdwUnderline, fdwStrikeOut, fdwCharSet, fdwOutputPrecision, fdwClipPrecision, fdwQuality, fdwPitchAndFamily, lpszFace)
+      #~ HFONT CreateFont(
+        #~ __in  int nHeight,
+        #~ __in  int nWidth,
+        #~ __in  int nEscapement,
+        #~ __in  int nOrientation,
+        #~ __in  int fnWeight,
+        #~ __in  DWORD fdwItalic,
+        #~ __in  DWORD fdwUnderline,
+        #~ __in  DWORD fdwStrikeOut,
+        #~ __in  DWORD fdwCharSet,
+        #~ __in  DWORD fdwOutputPrecision,
+        #~ __in  DWORD fdwClipPrecision,
+        #~ __in  DWORD fdwQuality,
+        #~ __in  DWORD fdwPitchAndFamily,
+        #~ __in  LPCTSTR lpszFace
+      #~ );
+    #~ check(hPrinter, Integer)
+    exception_for_0{
+      api_call(@@CreateFont, nHeight, nWidth, nEscapement, nOrientation, fnWeight, fdwItalic, fdwUnderline, fdwStrikeOut, fdwCharSet, fdwOutputPrecision, fdwClipPrecision, fdwQuality, fdwPitchAndFamily, lpszFace)
+    }
+  end
 end
 
 if __FILE__ == $0
-  Win32ApiGDI.new
+  gdi = Win32ApiGDI.new
+  
+  nHeight = 0
+  nWidth = 0
+  nEscapement = 0
+  nOrientation = 0
+  fnWeight = 400
+  fdwItalic = 0
+  fdwUnderline = 0
+  fdwStrikeOut = 0
+  fdwCharSet = 0
+  fdwOutputPrecision = 0
+  fdwClipPrecision = 0
+  fdwQuality = 0
+  fdwPitchAndFamily = 0
+  lpszFace = "Arial\0"
+  
+  font = gdi.create_font(nHeight, nWidth, nEscapement, nOrientation, fnWeight, fdwItalic, fdwUnderline, fdwStrikeOut, fdwCharSet, fdwOutputPrecision, fdwClipPrecision, fdwQuality, fdwPitchAndFamily, lpszFace)
+  
+  
 end
