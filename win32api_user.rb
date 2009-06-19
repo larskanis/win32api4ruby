@@ -1,5 +1,6 @@
 if __FILE__ == $0
   require 'Win32API'
+  require 'win32api_base'
 end
 
 IMAGE_ENHMETAFILE = 3
@@ -59,7 +60,23 @@ class Win32ApiUser  < Win32ApiBase
       api_call(@@LoadImage, hinst, lpszName, uType, cxDesired, cyDesired, fuLoad)
     }
   end
+  #--------------------------------------------------------------------------------------------------------------
+  
+  @@DrawText = USER32['DrawText', 'LLpLpL']
+  def draw_text(hdc, lpchText, nCount, lpRect, uFormat)
+      #~ int DrawText(
+        #~ __in     HDC hDC,
+        #~ __inout  LPCTSTR lpchText,
+        #~ __in     int nCount,
+        #~ __inout  LPRECT lpRect,
+        #~ __in     UINT uFormat
+      #~ );
+    exception_for_0{
+      api_call(@@DrawText, hdc, lpchText, nCount, lpRect, uFormat)
+    }
+  end
 end
 
 if __FILE__ == $0
+  Win32ApiUser.new
 end
