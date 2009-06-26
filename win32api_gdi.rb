@@ -192,6 +192,19 @@ class Win32ApiGDI < Win32ApiBase
   end
   #--------------------------------------------------------------------------------------------------------------
   
+  #~ @@AbortDoc = Win32API.new('gdi32', 'AbortDoc', ['N'], 'N')
+  @@AbortDoc = GDI32['AbortDoc', 'LL']
+  def abort_doc(hPrinter)
+      #~ int AbortDoc(
+        #~ __in  HDC hdc
+      #~ );
+    check(hPrinter, Integer)
+    exception_for_0{
+      api_call(@@AbortDoc, hPrinter)
+    }
+  end
+  #--------------------------------------------------------------------------------------------------------------
+  
   @@StartDoc = Win32API.new('gdi32', 'StartDoc', ['N','P'], 'N')
   #~ @@StartDoc = GDI32['StartDoc', 'LLP']
   def start_doc(hPrinter, pDocInfo)

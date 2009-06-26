@@ -279,7 +279,9 @@ class Winspool < Win32ApiBase
   @@StartDocPrinter = Win32API.new('winspool.drv', 'StartDocPrinter', ['N','N','P'],  'N')
   #~ @@StartDocPrinter = WINSPOOL['StartDocPrinter', 'LLLP']
   def start_doc_printer(hPrinter, level, pDocInfo)
-    check(hPrinter, Integer); check(level, Integer); check(pDocInfo, String)
+    check(hPrinter, Integer); 
+    check(level, Integer); 
+    check(pDocInfo, String)
     exception_for_0{
       api_call(@@StartDocPrinter, hPrinter, level, pDocInfo)
     }
