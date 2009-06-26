@@ -75,6 +75,89 @@ class Win32ApiUser  < Win32ApiBase
       api_call(@@DrawText, hdc, lpchText, nCount, lpRect, uFormat)
     }
   end
+  #--------------------------------------------------------------------------------------------------------------
+  
+  @@CallWindowProc = USER32['CallWindowProc', 'LPLLLL']
+  def call_window_proc(lpPrevWndFunc, hWnd, msg, wParam, lParam)
+      #~ LRESULT CallWindowProc(      
+          #~ WNDPROC lpPrevWndFunc,
+          #~ HWND hWnd,
+          #~ UINT Msg,
+          #~ WPARAM wParam,
+          #~ LPARAM lParam
+      #~ );
+    api_call(@@CallWindowProc, lpPrevWndFunc, hWnd, msg, wParam, lParam)
+  end
+  #--------------------------------------------------------------------------------------------------------------
+  
+  @@SetWindowLong = USER32['SetWindowLong', 'PLLP']
+  def set_window_long(hWnd, nIndex, dwNewLong)
+      #~ LONG SetWindowLong(      
+          #~ HWND hWnd,
+          #~ int nIndex,
+          #~ LONG dwNewLong
+      #~ );
+    exception_for_nil{
+      api_call(@@SetWindowLong, hWnd, nIndex, dwNewLong)
+    }
+  end
+  
+  @@CreateWindowExA = USER32['CreateWindowExA', 'LLSSLIIIILLLL']
+  def create_window_ex(dwExStyle, lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam)
+    #~ HWND CreateWindow(      
+        #~ DWORD dwExStyle,
+        #~ LPCTSTR lpClassName,
+        #~ LPCTSTR lpWindowName,
+        #~ DWORD dwStyle,
+        #~ int x,
+        #~ int y,
+        #~ int nWidth,
+        #~ int nHeight,
+        #~ HWND hWndParent,
+        #~ HMENU hMenu,
+        #~ HINSTANCE hInstance,
+        #~ LPVOID lpParam
+    #~ );
+    exception_for_0{
+      api_call(@@CreateWindowExA, dwExStyle, lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam)
+    }
+  end
+  
+  @@UpdateWindow = USER32['UpdateWindow', 'LL']
+  def update_window(hwnd)
+    exception_for_0{
+      api_call(@@UpdateWindow, hwnd)
+    }
+  end
+  
+  #~ {GetMessage will return True until it gets a WM_OUIT message. 
+  #~ So this program will keep running untill you Post a Quit Message}
+  @@GetMessage = USER32['GetMessage', 'LpLLL']
+  def get_message(lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax)
+    exception_for_0{
+      api_call(@@GetMessage, lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax)
+    }
+  end
+       
+  #~ {Translate any WM_KEYDOWN keyboard Msg to a WM_CHAR message} 
+  @@TranslateMessage = USER32['TranslateMessage', 'LP']
+  def translate_message(msg)
+    #~ exception_for_0{
+      api_call(@@TranslateMessage, msg)
+    #~ }
+  end
+                               
+  #~ {this Sends Msg to the address of the 
+  #~ "Window Procedure" set in the Resistered
+  #~ Window's Class for that window}
+  @@DispatchMessage = USER32['DispatchMessage', 'LP']
+  def dispatch_message(msg)
+    #~ exception_for_0{
+      api_call(@@DispatchMessage, msg)
+    #~ }
+  end
+  
+
 end
 
 if __FILE__ == $0
