@@ -236,6 +236,15 @@ class Win32ApiBase
     end
     return res
   end
+  
+  def exception_for_nil()
+    delete_errors
+    res = yield
+    if res.nil?
+      raise ApiError, get_last_error_text
+    end
+    return res
+  end
   # --------------------------------------------------------------------------------------------------------------
   
   def format_message(dwFlags, lpSource, dwMessageID, dwLanguageID, lpBuffer, nSize, arguments)
@@ -275,6 +284,7 @@ class Win32ApiBase
   def api_call(apiFunction, *args)
     begin
       res = apiFunction.call(*args)
+      #~ p "res #{res.inspect}"
       erg = res.kind_of?(Array) ? res[0] : res
       return erg
     rescue RuntimeError => e
