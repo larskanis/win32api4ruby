@@ -1,3 +1,5 @@
+# -*- coding: UTF-8 -*-
+
 if __FILE__ == $0
   require 'Win32API'
 end
@@ -136,13 +138,13 @@ class Winspool < Win32ApiBase
     # und dann die Infos holen
     cbBuf = pcbNeeded.unpack("V")[0] + 1
     
-    pPrinterEnum = "\0" * cbBuf # Buffer für die Datenübergabe aufbereiten
+    pPrinterEnum = "\0" * cbBuf # Buffer fÃ¼r die DatenÃ¼bergabe aufbereiten
     
     exception_for_0{
       api_call(@@EnumPrinters, pr, nil, pi, pPrinterEnum, cbBuf, pcbNeeded, pcReturned)
     }
     
-    #~ p "Laenge des übergebenen Puffers: #{cbBuf}"
+    #~ p "Laenge des Ã¼bergebenen Puffers: #{cbBuf}"
     needed = pcbNeeded.unpack("V")[0]
     returned = pcReturned.unpack("V")[0]
     #~ p "benoetigte Bytes: #{needed}"
@@ -405,7 +407,7 @@ if __FILE__ == $0
   # ............................................................................................
   # erst einmal ermitteln, wieviel Speicher gebraucht wird
   cbBuf = 0
-  pPrinter = "\0" * cbBuf # Buffer für die Datenübergabe aufbereiten
+  pPrinter = "\0" * cbBuf # Buffer fÃ¼r die DatenÃ¼bergabe aufbereiten
   
   #~ ws.exception_for_0{
     ws.get_printer(hPrinter, level, pPrinter, cbBuf, pcbNeeded)
@@ -416,7 +418,7 @@ if __FILE__ == $0
   # und dann die Infos holen
   cbBuf = pcbNeeded.unpack("V")[0] + 1
   #~ pPrinter = DL.malloc(cbBuf)
-  pPrinter = "\0" * cbBuf # Buffer für die Datenübergabe aufbereiten
+  pPrinter = "\0" * cbBuf # Buffer fÃ¼r die DatenÃ¼bergabe aufbereiten
   ws.exception_for_0{
     ws.get_printer(hPrinter, level, pPrinter, cbBuf, pcbNeeded)
   }

@@ -1,3 +1,5 @@
+# -*- coding: UTF-8 -*-
+
 require 'win32api_base'
 
 

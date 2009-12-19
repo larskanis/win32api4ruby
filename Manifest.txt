@@ -1,0 +1,13 @@
+.autotest
+History.txt
+Manifest.txt
+README.txt
+Rakefile
+lib/win32api4ruby.rb
+lib/win32api_comdlg.rb
+lib/win32api_user.rb
+lib/win32api_gdi.rb
+lib/win32api_winspool.rb
+lib/win32api_kernel.rb
+lib/win32api_base.rb
+test/test_win32api4ruby.rb

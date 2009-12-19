@@ -1,3 +1,5 @@
+# -*- coding: UTF-8 -*-
+
 require "dl"
 require 'Win32API'
 
@@ -43,7 +45,7 @@ class Win32ApiBase
       word = "H"
       dword = "L"
       # ---------------------------------------------------------------------------
-      # der Definitionsstring für die Struktur
+      # der Definitionsstring fÃ¼r die Struktur
         string +              #~ TCHAR dmDeviceName[CCHDEVICENAME];
         word +              #~ WORD  dmSpecVersion;
         word +              #~ WORD  dmDriverVersion;
@@ -62,7 +64,7 @@ class Win32ApiBase
             short +         #~ short dmPrintQuality;
           #~ } ;
           #~ struct {
-            # nur für Displays
+            # nur fÃ¼r Displays
             #~ pointl +        #~ POINTL dmPosition;
             #~ dword +         #~ DWORD dmDisplayOrientation;
             #~ dword +         #~ DWORD dmDisplayFixedOutput;
@@ -79,7 +81,7 @@ class Win32ApiBase
         dword +             #~ DWORD dmPelsWidth;
         dword +             #~ DWORD dmPelsHeight;
         #~ union {
-            # nur für Displays
+            # nur fÃ¼r Displays
 #          dword +           #~ DWORD dmDisplayFlags;
           dword +           #~ DWORD dmNup;
         #~ } ;
@@ -127,7 +129,7 @@ class Win32ApiBase
               :dmPrintQuality,
             #~ } ,
             #~ struct {
-            # nur für Displays
+            # nur fÃ¼r Displays
               #~ :dmPosition,
               #~ :dmDisplayOrientation,
               #~ :dmDisplayFixedOutput,
@@ -144,7 +146,7 @@ class Win32ApiBase
           :dmPelsWidth,
           :dmPelsHeight,
           #~ union {
-            # nur für Displays
+            # nur fÃ¼r Displays
             #~ :dmDisplayFlags,
             :dmNup,
           #~ } ,

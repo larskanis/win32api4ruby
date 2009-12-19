@@ -1,3 +1,5 @@
+# -*- coding: UTF-8 -*-
+
 if __FILE__ == $0
   require 'Win32API'
   require 'win32api_base'
