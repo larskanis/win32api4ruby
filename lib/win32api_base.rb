@@ -239,6 +239,19 @@ class Win32ApiBase
     return res
   end
   
+  def exception_for_com_error()
+    delete_errors
+    res = yield
+    if res != 0
+      text = case
+        when (res&0xffff0000) == 0x80070000 then `net helpmsg #{res&0xffff}`.strip
+        else get_last_error_text
+      end
+      raise ApiError, sprintf('%#x %s', res, text)
+    end
+    return res
+  end
+  
   def exception_for_nil()
     delete_errors
     res = yield

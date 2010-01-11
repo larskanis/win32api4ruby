@@ -1,57 +1,4 @@
 # -*- coding: UTF-8 -*-
-if __FILE__ == $0
-  require 'Win32API'
-end
-
-PRINTDLGA = C::Struct.define { 
-  DWORD :lStructSize
-  HWND :hwndOwner
-  HGLOBAL :hDevMode
-  HGLOBAL :hDevNames
-  HDC :hDC
-  DWORD :Flags
-  WORD :nFromPage
-  WORD :nToPage
-  WORD :nMinPage
-  WORD :nMaxPage
-  WORD :nCopies
-  HINSTANCE :hInstance
-  LPARAM :lCustData
-  LPPRINTHOOKPROC :lpfnPrintHook
-  LPSETUPHOOKPROC :lpfnSetupHook
-  LPCSTR :lpPrintTemplateName
-  LPCSTR :lpSetupTemplateName
-  HGLOBAL :hPrintTemplate
-  HGLOBAL :hSetupTemplate
-}
-PRINTDLGW = C::Struct.define { 
-  DWORD :lStructSize
-  HWND :hwndOwner
-  HGLOBAL :hDevMode
-  HGLOBAL :hDevNames
-  HDC :hDC
-  DWORD :Flags
-  WORD :nFromPage
-  WORD :nToPage
-  WORD :nMinPage
-  WORD :nMaxPage
-  WORD :nCopies
-  HINSTANCE :hInstance
-  LPARAM :lCustData
-  LPPRINTHOOKPROC :lpfnPrintHook
-  LPSETUPHOOKPROC :lpfnSetupHook
-  LPCWSTR :lpPrintTemplateName
-  LPCWSTR :lpSetupTemplateName
-  HGLOBAL :hPrintTemplate
-  HGLOBAL :hSetupTemplate
-}
-if Object.const_defined?(:UNICODE)
-  PRINTDLG = PRINTDLGW
-  LPPRINTDLG = LPPRINTDLGW
-else
-  PRINTDLG = PRINTDLGA
-  #~ LPPRINTDLG = LPPRINTDLGA
-end
 
 ##
 ##  Flags for PrintDlg and PrintDlgEx.
@@ -98,7 +45,100 @@ class Win32ApiComDlg  < Win32ApiBase
       api_call(@@PrintDlg, pPrintDlg)
     }
   end
-end
 
-if __FILE__ == $0
+  @@PrintDlgEx = COMMDLG32['PrintDlgEx', 'Lp']
+  def print_dlg_ex(pPrintDlgEx)
+    exception_for_com_error{
+      api_call(@@PrintDlgEx, pPrintDlgEx)
+    }
+  end
+  
+  @@PageSetupDlg = COMMDLG32['PageSetupDlg', 'Ip']
+  def print_setup_dlg(pPageSetupDlg)
+    exception_for_0{
+      api_call(@@PageSetupDlg, pPageSetupDlg)
+    }
+  end
+
+  PRINTDLG_types = "L"*2 + "L"*2 + "L"*2 + "H"*5 + "L"*8
+  def create_PRINTDLG
+    pdlg = DL.malloc(DL.sizeof(PRINTDLG_types))
+    pdlg.struct!(PRINTDLG_types, 
+        :lStructSize,
+        :hwndOwner,
+        :hDevMode,
+        :hDevNames,
+        :hDC,
+        :Flags,
+        :nFromPage,
+        :nToPage,
+        :nMinPage,
+        :nMaxPage,
+        :nCopies,
+        :hInstance,
+        :lCustData,
+        :lpfnPrintHook,
+        :lpfnSetupHook,
+        :lpPrintTemplateName,
+        :lpSetupTemplateName,
+        :hPrintTemplate,
+        :hSetupTemplate)
+    #~ pdlg[:lStructSize] = DL.sizeof(PRINTDLG_types)
+    pdlg[:lStructSize] = 66
+    return pdlg
+  end
+
+  PAGESETUPDLG_types = "L"*2 + "l"*2 + "L" + "L"*2 + "L"*4*2 + "L"*4 + "p" + "L"
+  def create_PAGESETUPDLG
+    pdlg = DL.malloc(DL.sizeof(PAGESETUPDLG_types))
+    pdlg.struct!(PAGESETUPDLG_types, 
+      :lStructSize,
+      :hwndOwner,
+      :hDevMode,
+      :hDevNames,
+      :Flags,
+      :ptPaperSizeX, :ptPaperSizeY,
+      :rtMinMarginL,:rtMinMarginT,:rtMinMarginR,:rtMinMarginB,
+      :rtMarginL,:rtMarginT,:rtMarginR,:rtMarginB,
+      :hInstance,
+      :lCustData,
+      :lpfnPageSetupHook,
+      :lpfnPagePaintHook,
+      :lpPageSetupTemplateName,
+      :hPageSetupTemplate
+    )
+    pdlg[:lStructSize] = DL.sizeof(PAGESETUPDLG_types)
+    return pdlg
+  end
+  
+  PRINTDLGEX_types = "L"*5 + "L"*5 + "P" + "L"*3 + "L" + "S" + "P" + "L" + "P" +"L"*2
+  def create_PRINTDLGEX
+    pdlg = DL.malloc(DL.sizeof(PRINTDLGEX_types))
+    pdlg.struct!(PRINTDLGEX_types, 
+      :lStructSize,
+      :hwndOwner,
+      :hDevMode,
+      :hDevNames,
+      :hDC,
+      :Flags,
+      :Flags2,
+      :ExclusionFlags,
+      :nPageRanges,
+      :nMaxPageRanges,
+      :lpPageRanges,
+      :nMinPage,
+      :nMaxPage,
+      :nCopies,
+      :hInstance,
+      :lpPrintTemplateName,
+      :lpCallback,
+      :nPropertyPages,
+      :plphPropertyPages,
+      :nStartPage,
+      :dwResultAction
+    )
+    pdlg[:lStructSize] = DL.sizeof(PRINTDLGEX_types)
+    return pdlg
+  end
+    
 end
