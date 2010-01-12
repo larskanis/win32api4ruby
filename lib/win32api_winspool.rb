@@ -1,243 +1,117 @@
 # -*- coding: UTF-8 -*-
 
-if __FILE__ == $0
-  require 'Win32API'
-end
-
 require 'Win32API_base'
 
-    PRINTER_ENUM_DEFAULT = 0x00000001
-    PRINTER_ENUM_LOCAL = 0x00000002
-    PRINTER_ENUM_CONNECTIONS = 0x00000004
-    PRINTER_ENUM_FAVORITE = 0x00000004
-    PRINTER_ENUM_NAME = 0x00000008
-    PRINTER_ENUM_REMOTE = 0x00000010
-    PRINTER_ENUM_SHARED = 0x00000020
-    PRINTER_ENUM_NETWORK = 0x00000040
-    
-    PRINTER_INFO_1 = 1
-    PRINTER_INFO_2 = 2
+class Win32ApiWinspool < Win32ApiBase
+  PRINTER_ENUM_DEFAULT = 0x00000001
+  PRINTER_ENUM_LOCAL = 0x00000002
+  PRINTER_ENUM_CONNECTIONS = 0x00000004
+  PRINTER_ENUM_FAVORITE = 0x00000004
+  PRINTER_ENUM_NAME = 0x00000008
+  PRINTER_ENUM_REMOTE = 0x00000010
+  PRINTER_ENUM_SHARED = 0x00000020
+  PRINTER_ENUM_NETWORK = 0x00000040
 
-class PRINTER_INFO_2_STRUCT < Win32ApiBase
-  def initialize(printerattr)
-          #~ pServerName,
-          #~ pPrinterName,
-          #~ pShareName,
-          #~ pPortName,
-          #~ pDriverName,
-          #~ pComment,
-          #~ pLocation,
-          #~ pDevMode,
-          #~ pSepFile,
-          #~ pPrintProcessor,
-          #~ pDatatype,
-          #~ pParameters,
-          #~ pSecurityDescriptor,
-          #~ attributes,
-          #~ priority,
-          #~ defaultPriority,
-          #~ startTime,
-          #~ untilTime,
-          #~ status,
-          #~ cJobs,
-          #~ averagePPM = *printerattr
-          #~ p pointer_to_devmode(pDevMode)
-          
-          #~ p "pDevMode #{pDevMode.inspect}"
-          #~ p "pPrinterName #{}"
-          #~ p pointer_to_s(pDevMode)
-          #~ p pointer_to_s(pServerName)
-          #~ p pointer_to_s(pPrinterName)
-          #~ p pointer_to_s(pShareName)
-          #~ p pointer_to_s(pPortName)
-          #~ p pointer_to_s(pDriverName)
-          #~ p pointer_to_s(pComment)
-          #~ p pointer_to_s(pLocation)
-          #~ p pointer_to_s(pServerName)
-          #~ p pointer_to_s(pSepFile)
-          #~ p pointer_to_s(pPrintProcessor)
-          #~ p pointer_to_s(pDatatype)
-          #~ p pointer_to_s(pParameters)
-          
-      printerattr.struct!("L"*21,
-          :pServerName,
-          :pPrinterName,
-          :pShareName,
-          :pPortName,
-          :pDriverName,
-          :pComment,
-          :pLocation,
-          :pDevMode,
-          :pSepFile,
-          :pPrintProcessor,
-          :pDatatype,
-          :pParameters,
-          :pSecurityDescriptor,
-          :attributes,
-          :priority,
-          :defaultPriority,
-          :startTime,
-          :untilTime,
-          :status,
-          :cJobs,
-          :averagePPM
-      )
-      p pointer_to_s(printerattr[:pServerName])
-      p pointer_to_s(printerattr[:pPrinterName])
-      p pointer_to_s(printerattr[:status])
-  end
-end
+  PRINTER_INFO_1 = 1
+  PRINTER_INFO_2 = 2
+  PRINTER_INFO_3 = 3
+  PRINTER_INFO_4 = 4
+  PRINTER_INFO_5 = 5
 
-class Winspool < Win32ApiBase
-  WINSPOOL = DL.dlopen('winspool.drv')
-  #the functions that wrap the Win32API calls enforce type checking on arguments
-  # (through #check). This is to be consistent with the Win32API which will assume
-  # different arguments are calling different functions, throwing wacky errors
-  #API WRAPPERS
-  #-----------------------------------------------------------------------------------------------------------------
+  DM_PROMPT = 4
+  DM_IN_PROMPT = DM_PROMPT
+  DM_MODIFY = 8
+  DM_IN_BUFFER = DM_MODIFY
+  DM_COPY = 2
+  DM_OUT_BUFFER = DM_COPY
+
+  IDOK = 1
+  IDCANCEL = 2
   
-  @@EnumPrinters = Win32API.new('winspool.drv', 'EnumPrinters', ['N', 'P', 'N', 'P', 'N', 'P', 'P'], 'N')
-  #~ @@EnumPrinters = WINSPOOL['EnumPrinters', 'LLPLpLpp']
-  def enum_printers()
-      #~ __in   DWORD Flags,
-      #~ __in   LPTSTR Name,
-      #~ __in   DWORD Level,
-      #~ __out  LPBYTE pPrinterEnum,
-      #~ __in   DWORD cbBuf,
-      #~ __out  LPDWORD pcbNeeded,
-      #~ __out  LPDWORD pcReturned
-      
-    pcbNeeded = "\0" * 4
-    pcReturned = "\0" * 4
-    pr = 
-    #~ PRINTER_ENUM_DEFAULT |
-    PRINTER_ENUM_LOCAL |
-    PRINTER_ENUM_CONNECTIONS |
-    PRINTER_ENUM_FAVORITE |
-    #~ PRINTER_ENUM_NAME |
-    #~ PRINTER_ENUM_REMOTE |
-    #~ PRINTER_ENUM_SHARED |
-    #~ PRINTER_ENUM_NETWORK |
-    #~ PRINTER_ENUM_EXPAND |
-    #~ PRINTER_ENUM_CONTAINER |
-    #~ PRINTER_ENUM_ICONMASK |
-    0 # Dummy
-    
-    #~ pi = PRINTER_INFO_1
-    pi = PRINTER_INFO_2
-    #~ pi = PRINTER_INFO_4
-    #~ pi = PRINTER_INFO_5
+  WINSPOOL = DL.dlopen('winspool.drv')
+  
+  @@EnumPrinters = WINSPOOL['EnumPrinters', 'LLPLpLpp']
+  def enum_printers(flags, name, level)
+    pcbNeeded = DL.malloc(DL.sizeof('L'))
+    pcbNeeded.struct!('L', :size)
+    pcReturned = DL.malloc(DL.sizeof('L'))
+    pcReturned.struct!('L', :size)
+    pcbNeeded[:size] = 0
     
     # erst einmal ermitteln, wieviel Speicher gebraucht wird
-    cbBuf = 0
-    pPrinterEnum = "\0" * cbBuf # Buffer
-    #~ exception_for_0{
-      api_call(@@EnumPrinters, pr, nil, pi, pPrinterEnum, 0, pcbNeeded, pcReturned)
-    #~ }
+    api_call(@@EnumPrinters, flags, name, level, nil, 0, pcbNeeded, pcReturned)
     
     # und dann die Infos holen
-    cbBuf = pcbNeeded.unpack("V")[0] + 1
-    
-    pPrinterEnum = "\0" * cbBuf # Buffer für die Datenübergabe aufbereiten
-    
+    cbBuf = pcbNeeded[:size]
+#     puts "pcbNeeded: #{cbBuf}"
+    pPrinterEnum = DL.malloc(cbBuf)
     exception_for_0{
-      api_call(@@EnumPrinters, pr, nil, pi, pPrinterEnum, cbBuf, pcbNeeded, pcReturned)
+      api_call(@@EnumPrinters, flags, name, level, pPrinterEnum, cbBuf, pcbNeeded, pcReturned)
     }
     
     #~ p "Laenge des übergebenen Puffers: #{cbBuf}"
-    needed = pcbNeeded.unpack("V")[0]
-    returned = pcReturned.unpack("V")[0]
-    #~ p "benoetigte Bytes: #{needed}"
-    #~ p "zurueckgegebene Drucker: #{returned}"
-    if returned > 0
-      if pi == PRINTER_INFO_1
-        #~ typedef struct _PRINTER_INFO_1 {
-          #~ DWORD  Flags;
-          #~ LPTSTR pDescription;
-          #~ LPTSTR pName;
-          #~ LPTSTR pComment;
-        #~ } PRINTER_INFO_1, *PPRINTER_INFO_1;
+    needed = pcbNeeded[:size]
+    returned = pcReturned[:size]
+#     puts "benoetigte Bytes: #{needed}"
+#     puts "zurueckgegebene Drucker: #{returned}"
 
-        anz_attr = 4
-        printerattrs = pPrinterEnum.unpack("V" * anz_attr * returned)
-        while (printerattr=printerattrs.slice!(0, anz_attr)) && !printerattr.empty?
-          p "*"*50
-          flags, pDescription, pName, pComment = *printerattr
-          p pointer_to_s(pDescription)
-          p pointer_to_s(pName)
-          p pointer_to_s(pComment)
-        end
-      elsif pi == PRINTER_INFO_2
-        #~ typedef struct _PRINTER_INFO_2 {
-          #~ LPTSTR               pServerName;
-          #~ LPTSTR               pPrinterName;
-          #~ LPTSTR               pShareName;
-          #~ LPTSTR               pPortName;
-          #~ LPTSTR               pDriverName;
-          #~ LPTSTR               pComment;
-          #~ LPTSTR               pLocation;
-          #~ LPDEVMODE            pDevMode;
-          #~ LPTSTR               pSepFile;
-          #~ LPTSTR               pPrintProcessor;
-          #~ LPTSTR               pDatatype;
-          #~ LPTSTR               pParameters;
-          #~ PSECURITY_DESCRIPTOR pSecurityDescriptor;
-          #~ DWORD                Attributes;
-          #~ DWORD                Priority;
-          #~ DWORD                DefaultPriority;
-          #~ DWORD                StartTime;
-          #~ DWORD                UntilTime;
-          #~ DWORD                Status;
-          #~ DWORD                cJobs;
-          #~ DWORD                AveragePPM;
-        #~ } PRINTER_INFO_2, *PPRINTER_INFO_2;
-        anz_attr = 21
-        printerattrs = pPrinterEnum.unpack("V" * anz_attr * returned)
-        while (printerattr=printerattrs.slice!(0, anz_attr)) && !printerattr.empty?
-          p "*"*50
-          PRINTER_INFO_2_STRUCT.new(printerattr)
-        end
-      elsif pi == PRINTER_INFO_4
-        #~ typedef struct _PRINTER_INFO_4 {
-          #~ LPTSTR pPrinterName;
-          #~ LPTSTR pServerName;
-          #~ DWORD  Attributes;
-        #~ } PRINTER_INFO_4, *PPRINTER_INFO_4;
-        anz_attr = 3
-        printerattrs = pPrinterEnum.unpack("V" * anz_attr * returned)
-        while (printerattr=printerattrs.slice!(0, anz_attr)) && !printerattr.empty?
-          p "*"*50
-          pPrinterName,
-          pServerName,
-          attributes = *printerattr
-          p pointer_to_s(pPrinterName)
-        end
-      elsif pi == PRINTER_INFO_5
-        #~ typedef struct _PRINTER_INFO_5 {
-          #~ LPTSTR pPrinterName;
-          #~ LPTSTR pPortName;
-          #~ DWORD  Attributes;
-          #~ DWORD  DeviceNotSelectedTimeout;
-          #~ DWORD  TransmissionRetryTimeout;
-        #~ } PRINTER_INFO_5, *PPRINTER_INFO_5;
-        anz_attr = 5
-        printerattrs = pPrinterEnum.unpack("V" * anz_attr * returned)
-        while (printerattr=printerattrs.slice!(0, anz_attr)) && !printerattr.empty?
-          p "*"*50
-          pPrinterName,
-          pPortName,
-          attributes,
-          deviceNotSelectedTimeout,
-          transmissionRetryTimeout = *printerattr
-          p pointer_to_s(pPortName)
-        end
+    printers = (0...returned).map{|idx|
+      case level
+      when PRINTER_INFO_4
+        create_PRINTER_INFO_4(pPrinterEnum + idx*DL.sizeof(PRINTER_INFO_4_types))
+      else
+        raise "unsupported printer info level #{level.inspect}"
       end
+    }
+    return printers
+  end
+
+  PRINTER_INFO_4_types = 'PPL'
+  
+  #   typedef struct _PRINTER_INFO_4 {
+  #     LPTSTR pPrinterName;
+  #     LPTSTR pServerName;
+  #     DWORD  Attributes;
+  #   }PRINTER_INFO_4, *PPRINTER_INFO_4;
+  #
+  def create_PRINTER_INFO_4(mem)
+    mem ||= DL.malloc(DL.sizeof(PRINTER_INFO_4_types))
+    mem.struct!(PRINTER_INFO_4_types,
+      :pPrinterName,
+      :pServerName,
+      :Attributes)
+    return mem
+  end
+
+
+  # LONG DocumentProperties(
+  #   __in   HWND hWnd,
+  #   __in   HANDLE hPrinter,
+  #   __in   LPTSTR pDeviceName,
+  #   __out  PDEVMODE pDevModeOutput,
+  #   __in   PDEVMODE pDevModeInput,
+  #   __in   DWORD fMode
+  # );
+  # 
+  @@DocumentProperties = WINSPOOL['DocumentProperties', 'LLLPpPL']
+  def document_properties(hWnd, hPrinter, deviceName, devModeInput, mode)
+    # erst einmal ermitteln, wieviel Speicher gebraucht wird
+    bufsize = api_call(@@DocumentProperties, hWnd, hPrinter, deviceName, nil, devModeInput, 0)
+
+    # und dann die Infos holen
+    pDevModeOutput = DL.malloc(bufsize)
+    res = exception_for_negative{
+      api_call(@@DocumentProperties, hWnd, hPrinter, deviceName, pDevModeOutput, devModeInput, mode)
+    }
+    if res==IDOK
+      return pDevModeOutput[0, bufsize]
+    else
+      return nil
     end
   end
-  #-----------------------------------------------------------------------------------------------------------------
   
-#  @@OpenPrinter = WINSPOOL['OpenPrinter', 'LPpP']
-  @@OpenPrinter = Win32API.new('winspool.drv', 'OpenPrinter',['P','P','P'],  'N')
+  
+  @@OpenPrinter = WINSPOOL['OpenPrinter', 'LPpP']
   def open_printer(pPrinterName, phPrinter, pDefault)
       #~ BOOL OpenPrinter(
         #~ __in   LPTSTR pPrinterName,
@@ -259,8 +133,7 @@ class Winspool < Win32ApiBase
   end
   #-----------------------------------------------------------------------------------------------------------------
   
-  @@ClosePrinter = Win32API.new('winspool.drv', 'ClosePrinter', ['N'], 'N')
-  #~ @@ClosePrinter = WINSPOOL['ClosePrinter', 'LL']
+  @@ClosePrinter = WINSPOOL['ClosePrinter', 'LL']
   def close_printer(hPrinter)
     check(hPrinter,Integer)
     exception_for_0{
@@ -278,8 +151,7 @@ class Winspool < Win32ApiBase
   end
   #-----------------------------------------------------------------------------------------------------------------
   
-  @@StartDocPrinter = Win32API.new('winspool.drv', 'StartDocPrinter', ['N','N','P'],  'N')
-  #~ @@StartDocPrinter = WINSPOOL['StartDocPrinter', 'LLLP']
+  @@StartDocPrinter = WINSPOOL['StartDocPrinter', 'LLLP']
   def start_doc_printer(hPrinter, level, pDocInfo)
     check(hPrinter, Integer); 
     check(level, Integer); 
@@ -290,8 +162,7 @@ class Winspool < Win32ApiBase
   end
   #-----------------------------------------------------------------------------------------------------------------
   
-  @@EndDocPrinter = Win32API.new('winspool.drv', 'EndDocPrinter', ['N'], 'N')
-  #~ @@EndDocPrinter = WINSPOOL['EndDocPrinter', 'LL']
+  @@EndDocPrinter = WINSPOOL['EndDocPrinter', 'LL']
   def end_doc_printer(hPrinter)
     check(hPrinter, Integer)
     exception_for_0{
@@ -300,8 +171,7 @@ class Winspool < Win32ApiBase
   end
   #-----------------------------------------------------------------------------------------------------------------
   
-  @@StartPagePrinter = Win32API.new('winspool.drv', 'StartPagePrinter', ['N'],  'N')
-  #~ @@StartPagePrinter = WINSPOOL['StartPagePrinter', 'LL']
+  @@StartPagePrinter = WINSPOOL['StartPagePrinter', 'LL']
   def start_page_printer(hPrinter)
     check(hPrinter, Integer)
     exception_for_0{
@@ -310,8 +180,7 @@ class Winspool < Win32ApiBase
   end
   #-----------------------------------------------------------------------------------------------------------------
   
-  @@EndPagePrinter = Win32API.new('winspool.drv', 'EndPagePrinter', ['N'], 'N')
-  #~ @@EndPagePrinter = WINSPOOL['EndPagePrinter', 'LL']
+  @@EndPagePrinter = WINSPOOL['EndPagePrinter', 'LL']
   def end_page_printer(hPrinter)
     check(hPrinter, Integer)
     exception_for_0{
@@ -320,8 +189,7 @@ class Winspool < Win32ApiBase
   end
   #-----------------------------------------------------------------------------------------------------------------
   
-  @@WritePrinter = Win32API.new('winspool.drv', 'WritePrinter', ['N','P','N','P'],  'N')
-  #~ @@WritePrinter = WINSPOOL['WritePrinter', 'LLPLp']
+  @@WritePrinter = WINSPOOL['WritePrinter', 'LLPLp']
   def write_printer(hPrinter, pBuf, cdBuf, pcWritten)
       #~ BOOL WritePrinter(
         #~ __in   HANDLE hPrinter,
@@ -337,7 +205,7 @@ class Winspool < Win32ApiBase
   end
   #-----------------------------------------------------------------------------------------------------------------
   
-  @@GetPrinter = Win32API.new('winspool.drv', 'GetPrinter', ['N','N','p','N', 'p'],  'N')
+  @@GetPrinter = WINSPOOL['GetPrinter', 'LLLpLp']
   def get_printer(hPrinter, level, pPrinter, cbBuf, pcbNeeded)
     #~ BOOL GetPrinter(
       #~ __in   HANDLE hPrinter,

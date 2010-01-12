@@ -19,6 +19,11 @@ class Win32ApiKernel  < Win32ApiBase
       api_call(@@GlobalLock, hMovableMemory)
     }
   end
+  @@GlobalUnlock = Win32API.new('kernel32', 'GlobalUnlock', ['N'], 'N')
+  def global_unlock(hMovableMemory)
+    check(hMovableMemory,Integer)
+    api_call(@@GlobalUnlock, hMovableMemory)
+  end
   # --------------------------------------------------------------------------------------------------------------
   @@GlobalFree = Win32API.new('kernel32', 'GlobalFree', ['N'], 'N')
   def global_free(hMovableMemory)
