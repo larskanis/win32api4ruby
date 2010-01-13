@@ -40,25 +40,28 @@ class Comdlg < Base
   # different arguments are calling different functions, throwing wacky errors
   #API WRAPPERS
   # --------------------------------------------------------------------------------------------------------------
-  PrintDlg = COMDLG32['PrintDlg', 'Lp']
+  PrintDlgW = COMDLG32['PrintDlgW', 'Lp']
+  PrintDlgA = COMDLG32['PrintDlgA', 'Lp']
   def self.print_dlg(pPrintDlg)
     check(pPrintDlg, DL::PtrData)
     exception_for_0{
-      api_call(PrintDlg, pPrintDlg)
+      api_call(unicode ? PrintDlgW : PrintDlgA, pPrintDlg)
     }
   end
 
-  PrintDlgEx = COMDLG32['PrintDlgEx', 'Lp']
+  PrintDlgExW = COMDLG32['PrintDlgExW', 'Lp']
+  PrintDlgExA = COMDLG32['PrintDlgExA', 'Lp']
   def self.print_dlg_ex(pPrintDlgEx)
     exception_for_com_error{
-      api_call(PrintDlgEx, pPrintDlgEx)
+      api_call(unicode ? PrintDlgExW : PrintDlgExA, pPrintDlgEx)
     }
   end
   
-  PageSetupDlg = COMDLG32['PageSetupDlg', 'Ip']
+  PageSetupDlgW = COMDLG32['PageSetupDlgW', 'Ip']
+  PageSetupDlgA = COMDLG32['PageSetupDlgA', 'Ip']
   def self.print_setup_dlg(pPageSetupDlg)
     exception_for_0{
-      api_call(PageSetupDlg, pPageSetupDlg)
+      api_call(unicode ? PageSetupDlgW : PageSetupDlgA, pPageSetupDlg)
     }
   end
 

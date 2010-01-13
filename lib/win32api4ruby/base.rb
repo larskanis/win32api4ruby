@@ -1,29 +1,85 @@
 # -*- coding: UTF-8 -*-
 
 require "dl"
+require 'iconv'
 
 module Win32api4ruby
+module DL_PtrDataExtensions
+  ZeroZeroString = "\0\0"
+  def to_s_utf16
+    i = 0
+    while self[i,2]!=ZeroZeroString
+      i+=2
+    end
+    self[0,i]
+  end
+  
+  # Converts the Data containing a Unicode or Ansi-Text based on the current
+  # Win32api4ruby::Base.unicode setting to UTF-8.
+  def to_s_utf8
+    if Win32api4ruby::Base.unicode
+      @@iconv_Utf16ToUtf8 ||= Iconv.new('utf-8', 'utf-16le')
+      @@iconv_Utf16ToUtf8.iconv to_s_utf16
+    else
+      @@iconv_AnsiToUtf8 ||= Iconv.new('utf-8', 'windows-1252')
+      @@iconv_AnsiToUtf8.iconv to_s
+    end
+  end
+end
+
+module StringExtensions
+  # Converts a UTF-8 string to Windows-encoding based on the current
+  # Win32api4ruby::Base.unicode setting.
+  def to_s_win32
+    if Win32api4ruby::Base.unicode
+      @@iconv_Utf8ToUtf16 ||= Iconv.new('utf-16le', 'utf-8')
+      @@iconv_Utf8ToUtf16.iconv(self) << DL_PtrDataExtensions::ZeroZeroString
+    else
+      @@iconv_Utf8ToAnsi ||= Iconv.new('windows-1252', 'utf-8')
+      @@iconv_Utf8ToAnsi.iconv(self)
+    end
+  end
+end
+
+class ::DL::PtrData
+  include Win32api4ruby::DL_PtrDataExtensions
+end
+
+class ::String
+  include Win32api4ruby::StringExtensions
+end
+
 class Base
   
   class ApiError < RuntimeError
+    def initialize(code, text)
+      super(text)
+      @code = code
+    end
+  end
+  
+  # use ansi-methods by default
+  @@unicode = false
+  
+  def self.unicode=(enabled)
+    @@unicode = !!enabled
   end
 
+  def self.unicode
+    @@unicode
+  end
   
   def self.exception_for_0
     delete_errors
     res = yield
-    if res == 0
-      raise ApiError, get_last_error_text
-    end
+    raise_last_error if res == 0
     return res
   end
 
   def self.exception_for_non_0
     delete_errors
     res = yield
-    if res != 0
-      raise ApiError, get_last_error_text
-    end
+    raise_last_error if res != 0
     return res
   end
 
@@ -43,18 +99,14 @@ class Base
   def self.exception_for_nil
     delete_errors
     res = yield
-    if res.nil?
-      raise ApiError, get_last_error_text
-    end
+    raise_last_error if res.nil?
     return res
   end
 
   def self.exception_for_negative
     delete_errors
     res = yield
-    if res < 0
-      raise ApiError, get_last_error_text
-    end
+    raise_last_error if res < 0
     return res
   end
 
@@ -66,10 +118,16 @@ class Base
     end
   end
   # --------------------------------------------------------------------------------------------------------------
-  def self.get_last_error_text
+  def self.get_last_error_text(error_code=nil)
     message = DL.malloc(1024) #store 1kb space
-    Kernel.format_message(0x1000, '', Kernel.get_last_error(), 0, message, 1024, '')
-    message.to_s
+    error_code ||= Kernel.get_last_error()
+    Kernel.format_message(0x1000, '', error_code, 0, message, message.size, '')
+    message = unicode ? message.to_s_utf8 : message.to_s
+    sprintf('%s (%d)', message.chomp, error_code)
+  end
+  def self.raise_last_error
+    code = Kernel.get_last_error()
+    raise ApiError.new(code, get_last_error_text(code))
   end
   # --------------------------------------------------------------------------------------------------------------
   def self.show_error
@@ -79,7 +137,6 @@ class Base
   def self.api_call(apiFunction, *args)
     begin
       res = apiFunction.call(*args)
-      #~ p "res #{res.inspect}"
       erg = res.kind_of?(Array) ? res[0] : res
       return erg
     rescue RuntimeError => e

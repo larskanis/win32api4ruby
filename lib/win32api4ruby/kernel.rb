@@ -43,7 +43,8 @@ class Kernel  < Base
     api_call(SetLastError, v)
   end
   # --------------------------------------------------------------------------------------------------------------
-  FormatMessage = KERNEL32['FormatMessage', 'LLPLLpLP']
+  FormatMessageW = KERNEL32['FormatMessageW', 'LLPLLpLP']
+  FormatMessageA = KERNEL32['FormatMessageA', 'LLPLLpLP']
   def self.format_message(dwFlags, lpSource, dwMessageID, dwLanguageID, lpBuffer, nSize, arguments)
     check(dwFlags,Integer);
     check(lpSource,String);
@@ -51,7 +52,7 @@ class Kernel  < Base
     check(dwLanguageID,Integer); check(lpBuffer,DL::PtrData);
     check(nSize,Integer);
     check(arguments,String)
-    api_call(FormatMessage, dwFlags, lpSource, dwMessageID, dwLanguageID, lpBuffer, nSize, arguments)
+    api_call(unicode ? FormatMessageW : FormatMessageA, dwFlags, lpSource, dwMessageID, dwLanguageID, lpBuffer, nSize, arguments)
   end
   # --------------------------------------------------------------------------------------------------------------
   def self.with_global_lock(handle)

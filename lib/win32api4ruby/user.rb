@@ -42,7 +42,8 @@ class User < Base
   # different arguments are calling different functions, throwing wacky errors
   #API WRAPPERS
   # --------------------------------------------------------------------------------------------------------------
-  LoadImage = USER32['LoadImage', 'LLPLLLL']
+  LoadImageW = USER32['LoadImageW', 'LLPLLLL']
+  LoadImageA = USER32['LoadImageA', 'LLPLLLL']
   def self.load_image(hinst, lpszName, uType, cxDesired, cyDesired, fuLoad)
       #~ HANDLE LoadImage(      
           #~ HINSTANCE hinst,
@@ -53,12 +54,13 @@ class User < Base
           #~ UINT fuLoad
       #~ );
     exception_for_0{
-      api_call(LoadImage, hinst, lpszName, uType, cxDesired, cyDesired, fuLoad)
+      api_call(unicode ? LoadImageW : LoadImageA, hinst, lpszName, uType, cxDesired, cyDesired, fuLoad)
     }
   end
   #--------------------------------------------------------------------------------------------------------------
   
-  DrawText = USER32['DrawText', 'LLpLpL']
+  DrawTextW = USER32['DrawTextW', 'LLpLpL']
+  DrawTextA = USER32['DrawTextA', 'LLpLpL']
   def self.draw_text(hdc, lpchText, nCount, lpRect, uFormat)
       #~ int DrawText(
         #~ __in     HDC hDC,
@@ -68,12 +70,13 @@ class User < Base
         #~ __in     UINT uFormat
       #~ );
     exception_for_0{
-      api_call(DrawText, hdc, lpchText, nCount, lpRect, uFormat)
+      api_call(unicode ? DrawTextW : DrawTextA, hdc, lpchText, nCount, lpRect, uFormat)
     }
   end
   #--------------------------------------------------------------------------------------------------------------
   
-  CallWindowProc = USER32['CallWindowProc', 'LPLLLL']
+  CallWindowProcW = USER32['CallWindowProcW', 'LPLLLL']
+  CallWindowProcA = USER32['CallWindowProcA', 'LPLLLL']
   def self.call_window_proc(lpPrevWndFunc, hWnd, msg, wParam, lParam)
       #~ LRESULT CallWindowProc(      
           #~ WNDPROC lpPrevWndFunc,
@@ -82,11 +85,12 @@ class User < Base
           #~ WPARAM wParam,
           #~ LPARAM lParam
       #~ );
-    api_call(CallWindowProc, lpPrevWndFunc, hWnd, msg, wParam, lParam)
+    api_call(unicode ? CallWindowProc : CallWindowProcA, lpPrevWndFunc, hWnd, msg, wParam, lParam)
   end
   #--------------------------------------------------------------------------------------------------------------
   
-  SetWindowLong = USER32['SetWindowLong', 'PLLP']
+  SetWindowLongW = USER32['SetWindowLongW', 'PLLP']
+  SetWindowLongA = USER32['SetWindowLongA', 'PLLP']
   def self.set_window_long(hWnd, nIndex, dwNewLong)
       #~ LONG SetWindowLong(      
           #~ HWND hWnd,
@@ -94,10 +98,11 @@ class User < Base
           #~ LONG dwNewLong
       #~ );
     exception_for_nil{
-      api_call(SetWindowLong, hWnd, nIndex, dwNewLong)
+      api_call(unicode ? SetWindowLongW : SetWindowLongA, hWnd, nIndex, dwNewLong)
     }
   end
   
+  CreateWindowExW = USER32['CreateWindowExW', 'LLSSLIIIILLLL']
   CreateWindowExA = USER32['CreateWindowExA', 'LLSSLIIIILLLL']
   def self.create_window_ex(dwExStyle, lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam)
     #~ HWND CreateWindow(      
@@ -115,7 +120,7 @@ class User < Base
         #~ LPVOID lpParam
     #~ );
     exception_for_0{
-      api_call(CreateWindowExA, dwExStyle, lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam)
+      api_call(unicode ? CreateWindowExW : CreateWindowExA, dwExStyle, lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam)
     }
   end
   
@@ -135,29 +140,27 @@ class User < Base
 
   #~ {GetMessage will return True until it gets a WM_OUIT message.
   #~ So this program will keep running untill you Post a Quit Message}
-  GetMessage = USER32['GetMessage', 'LpLLL']
+  GetMessageW = USER32['GetMessageW', 'LpLLL']
+  GetMessageA = USER32['GetMessageA', 'LpLLL']
   def self.get_message(lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax)
     exception_for_0{
-      api_call(GetMessage, lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax)
+      api_call(unicode ? GetMessageW : GetMessageA, lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax)
     }
   end
        
   #~ {Translate any WM_KEYDOWN keyboard Msg to a WM_CHAR message} 
   TranslateMessage = USER32['TranslateMessage', 'LP']
   def self.translate_message(msg)
-    #~ exception_for_0{
-      api_call(TranslateMessage, msg)
-    #~ }
+    api_call(TranslateMessage, msg)
   end
                                
   #~ {this Sends Msg to the address of the 
   #~ "Window Procedure" set in the Resistered
   #~ Window's Class for that window}
-  DispatchMessage = USER32['DispatchMessage', 'LP']
+  DispatchMessageW = USER32['DispatchMessageW', 'LP']
+  DispatchMessageA = USER32['DispatchMessageA', 'LP']
   def self.dispatch_message(msg)
-    #~ exception_for_0{
-      api_call(DispatchMessage, msg)
-    #~ }
+    api_call(unicode ? DispatchMessageW : DispatchMessageA, msg)
   end
   
 

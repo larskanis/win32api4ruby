@@ -31,7 +31,8 @@ class Winspool < Base
   
   WINSPOOL = DL.dlopen('winspool.drv')
   
-  EnumPrinters = WINSPOOL['EnumPrinters', 'LLPLpLpp']
+  EnumPrintersA = WINSPOOL['EnumPrintersA', 'LLPLpLpp']
+  EnumPrintersW = WINSPOOL['EnumPrintersW', 'LLPLpLpp']
   def self.enum_printers(flags, name, level)
     pcbNeeded = DL.malloc(DL.sizeof('L'))
     pcbNeeded.struct!('L', :size)
@@ -40,14 +41,14 @@ class Winspool < Base
     pcbNeeded[:size] = 0
     
     # erst einmal ermitteln, wieviel Speicher gebraucht wird
-    api_call(EnumPrinters, flags, name, level, nil, 0, pcbNeeded, pcReturned)
+    api_call(unicode ? EnumPrintersW : EnumPrintersA, flags, name, level, nil, 0, pcbNeeded, pcReturned)
     
     # und dann die Infos holen
     cbBuf = pcbNeeded[:size]
 #     puts "pcbNeeded: #{cbBuf}"
     pPrinterEnum = DL.malloc(cbBuf)
     exception_for_0{
-      api_call(EnumPrinters, flags, name, level, pPrinterEnum, cbBuf, pcbNeeded, pcReturned)
+      api_call(unicode ? EnumPrintersW : EnumPrintersA, flags, name, level, pPrinterEnum, cbBuf, pcbNeeded, pcReturned)
     }
     
     #~ p "Laenge des übergebenen Puffers: #{cbBuf}"
@@ -94,15 +95,16 @@ class Winspool < Base
   #   __in   DWORD fMode
   # );
   # 
-  DocumentProperties = WINSPOOL['DocumentProperties', 'LLLPpPL']
+  DocumentPropertiesW = WINSPOOL['DocumentPropertiesW', 'LLLPpPL']
+  DocumentPropertiesA = WINSPOOL['DocumentPropertiesA', 'LLLPpPL']
   def self.document_properties(hWnd, hPrinter, deviceName, devModeInput, mode)
     # erst einmal ermitteln, wieviel Speicher gebraucht wird
-    bufsize = api_call(DocumentProperties, hWnd, hPrinter, deviceName, nil, devModeInput, 0)
+    bufsize = api_call(unicode ? DocumentPropertiesW : DocumentPropertiesA, hWnd, hPrinter, deviceName, nil, devModeInput, 0)
 
     # und dann die Infos holen
     pDevModeOutput = DL.malloc(bufsize)
     res = exception_for_negative{
-      api_call(DocumentProperties, hWnd, hPrinter, deviceName, pDevModeOutput, devModeInput, mode)
+      api_call(unicode ? DocumentPropertiesW : DocumentPropertiesA, hWnd, hPrinter, deviceName, pDevModeOutput, devModeInput, mode)
     }
     if res==IDOK
       return pDevModeOutput[0, bufsize]
@@ -112,7 +114,8 @@ class Winspool < Base
   end
   
   
-  OpenPrinter = WINSPOOL['OpenPrinter', 'LPpP']
+  OpenPrinterW = WINSPOOL['OpenPrinterW', 'LPpP']
+  OpenPrinterA = WINSPOOL['OpenPrinterA', 'LPpP']
   def self.open_printer(pPrinterName, phPrinter, pDefault)
       #~ BOOL OpenPrinter(
         #~ __in   LPTSTR pPrinterName,
@@ -129,7 +132,7 @@ class Winspool < Base
       p phPrinter
       p pDefault
       p "."*10
-      api_call(OpenPrinter, pPrinterName, phPrinter, pDefault)
+      api_call(unicode ? OpenPrinterW : OpenPrinterA, pPrinterName, phPrinter, pDefault)
     }
   end
   #-----------------------------------------------------------------------------------------------------------------
@@ -220,5 +223,33 @@ class Winspool < Base
     #~ }
   end
   #-----------------------------------------------------------------------------------------------------------------
+  
+  PRINTDLG_types = "L"*2 + "L"*2 + "L"*2 + "H"*5 + "L"*8
+  def self.create_PRINTDLG
+    pdlg = DL.malloc(DL.sizeof(PRINTDLG_types))
+    pdlg.struct!(PRINTDLG_types, 
+        :lStructSize,
+        :hwndOwner,
+        :hDevMode,
+        :hDevNames,
+        :hDC,
+        :Flags,
+        :nFromPage,
+        :nToPage,
+        :nMinPage,
+        :nMaxPage,
+        :nCopies,
+        :hInstance,
+        :lCustData,
+        :lpfnPrintHook,
+        :lpfnSetupHook,
+        :lpPrintTemplateName,
+        :lpSetupTemplateName,
+        :hPrintTemplate,
+        :hSetupTemplate)
+    #~ pdlg[:lStructSize] = DL.sizeof(PRINTDLG_types)
+    pdlg[:lStructSize] = 66
+    return pdlg
+  end
 end
 end

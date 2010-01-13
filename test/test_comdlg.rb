@@ -27,5 +27,7 @@ class TestWin32api4ruby < Test::Unit::TestCase
   end
 end
 
-
-
+Win32api4ruby::Base.unicode = false
+Test::Unit::AutoRunner.run
+Win32api4ruby::Base.unicode = true
+Test::Unit::AutoRunner.run

@@ -98,7 +98,8 @@ class Gdi < Base
   end
   #--------------------------------------------------------------------------------------------------------------
   
-  TextOut = GDI32['TextOut', 'LLLLPL']
+  TextOutW = GDI32['TextOutW', 'LLLLPL']
+  TextOutA = GDI32['TextOutA', 'LLLLPL']
   def self.text_out(hdc, nXStart, nYStart, lpString, cbString)
       #~ BOOL TextOut(
         #~ __in  HDC hdc,
@@ -108,7 +109,7 @@ class Gdi < Base
         #~ __in  int cbString
       #~ );
     exception_for_0{
-      api_call(TextOut, hdc, nXStart, nYStart, lpString, cbString)
+      api_call(unicode ? TextOutW : TextOutA, hdc, nXStart, nYStart, lpString, cbString)
     }
   end
   #--------------------------------------------------------------------------------------------------------------
@@ -178,7 +179,8 @@ class Gdi < Base
   end
   #--------------------------------------------------------------------------------------------------------------
   
-  CreateDC = GDI32['CreateDC', 'LPPPP']
+  CreateDCW = GDI32['CreateDCW', 'LPPPP']
+  CreateDCA = GDI32['CreateDCA', 'LPPPP']
   def self.create_dc(lpszDriver, lpszDevice, lpszOutput, lpInitData)
        #~ HDC CreateDC(
             #~ LPCTSTR lpszDriver,
@@ -189,7 +191,7 @@ class Gdi < Base
 
     #~ hDC = CreateDC( 0, sPrnName, 0, dm );
     exception_for_0{
-      api_call(CreateDC, lpszDriver, lpszDevice, lpszOutput, lpInitData)
+      api_call(unicode ? CreateDCW : CreateDCA, lpszDriver, lpszDevice, lpszOutput, lpInitData)
     }
   end
   #--------------------------------------------------------------------------------------------------------------
@@ -206,11 +208,12 @@ class Gdi < Base
   end
   #--------------------------------------------------------------------------------------------------------------
   
-  StartDoc = GDI32['StartDoc', 'LLP']
+  StartDocW = GDI32['StartDocW', 'LLP']
+  StartDocA = GDI32['StartDocA', 'LLP']
   def self.start_doc(hPrinter, pDocInfo)
     check(hPrinter, Integer); check(pDocInfo, String)
     exception_for_0{
-      api_call(StartDoc, hPrinter, pDocInfo)
+      api_call(unicode ? StartDocW : StartDocA, hPrinter, pDocInfo)
     }
   end
   #--------------------------------------------------------------------------------------------------------------
@@ -245,7 +248,8 @@ class Gdi < Base
   end
   #--------------------------------------------------------------------------------------------------------------
   
-  CreateFont = GDI32['CreateFont', 'LLLLLLLLLLLLLLP']
+  CreateFontW = GDI32['CreateFontW', 'LLLLLLLLLLLLLLP']
+  CreateFontA = GDI32['CreateFontA', 'LLLLLLLLLLLLLLP']
   def self.create_font(nHeight, nWidth, nEscapement, nOrientation, fnWeight, fdwItalic, fdwUnderline, fdwStrikeOut, fdwCharSet, fdwOutputPrecision, fdwClipPrecision, fdwQuality, fdwPitchAndFamily, lpszFace)
       #~ HFONT CreateFont(
         #~ __in  int nHeight,
@@ -265,7 +269,7 @@ class Gdi < Base
       #~ );
     #~ check(hPrinter, Integer)
     exception_for_0{
-      api_call(CreateFont, nHeight, nWidth, nEscapement, nOrientation, fnWeight, fdwItalic, fdwUnderline, fdwStrikeOut, fdwCharSet, fdwOutputPrecision, fdwClipPrecision, fdwQuality, fdwPitchAndFamily, lpszFace)
+      api_call(unicode ? CreateFontW : CreateFontA, nHeight, nWidth, nEscapement, nOrientation, fnWeight, fdwItalic, fdwUnderline, fdwStrikeOut, fdwCharSet, fdwOutputPrecision, fdwClipPrecision, fdwQuality, fdwPitchAndFamily, lpszFace)
     }
   end
 end

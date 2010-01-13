@@ -9,8 +9,8 @@ class TestWin32api4ruby < Test::Unit::TestCase
     name = nil
     level = 4
     infos = Winspool.enum_printers(flags, name, level)
-    infos.each{|info|
-      puts "PrinterName: #{info[:pPrinterName]}, ServerName: #{info[:pServerName]}, Attributes: #{info[:Attributes]}"
+    infos[0..1].each{|info|
+      puts "PrinterName: #{info[:pPrinterName].to_s_utf8 if info[:pPrinterName]}, ServerName: #{info[:pServerName].to_s_utf8 if info[:pServerName]}, Attributes: #{info[:Attributes]}"
     }
   end
 
@@ -30,3 +30,8 @@ class TestWin32api4ruby < Test::Unit::TestCase
     end
   end
 end
+
+Win32api4ruby::Base.unicode = false
+Test::Unit::AutoRunner.run
+Win32api4ruby::Base.unicode = true
+Test::Unit::AutoRunner.run
