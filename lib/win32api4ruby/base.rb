@@ -152,5 +152,19 @@ class Base
   def self.delete_errors
     Kernel.set_last_error(0)
   end
+
+  def self.ensure_PtrData(data)
+    case data
+      when String
+        dlinitdata = DL.malloc(data.length)
+        dlinitdata[0, dlinitdata.size] = data
+        dlinitdata
+      when DL::PtrData
+        data
+      when NilClass
+      else
+        raise "#{data.class} instead of String or DL::PtrData"
+    end
+  end
 end
 end
