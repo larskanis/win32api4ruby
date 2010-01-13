@@ -22,10 +22,11 @@ class TestWin32api4ruby < Test::Unit::TestCase
     info = infos[0]
 
     if info
-      devmod = Winspool.document_properties 0, 0, info[:pPrinterName], nil, Winspool::DM_PROMPT|Winspool::DM_OUT_BUFFER
-      assert devmod.length > 10
+      devmod = Winspool.document_properties 0, 0, info[:pPrinterName], nil, Winspool::DM_OUT_BUFFER
+      assert devmod.size > 10
+      assert_operator 50..10000, :===, devmod[:dmYResolution]
+      assert_operator 50..10000, :===, devmod[:dmPrintQuality]
     else
-
       puts "no printer installed"
     end
   end

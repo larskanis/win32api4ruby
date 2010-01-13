@@ -102,12 +102,12 @@ class Winspool < Base
     bufsize = api_call(unicode ? DocumentPropertiesW : DocumentPropertiesA, hWnd, hPrinter, deviceName, nil, devModeInput, 0)
 
     # und dann die Infos holen
-    pDevModeOutput = DL.malloc(bufsize)
+    pDevModeOutput = create_DEVMOD(nil, bufsize)
     res = exception_for_negative{
       api_call(unicode ? DocumentPropertiesW : DocumentPropertiesA, hWnd, hPrinter, deviceName, pDevModeOutput, devModeInput, mode)
     }
     if res==IDOK
-      return pDevModeOutput[0, bufsize]
+      return pDevModeOutput
     else
       return nil
     end
@@ -223,33 +223,47 @@ class Winspool < Base
     #~ }
   end
   #-----------------------------------------------------------------------------------------------------------------
-  
-  PRINTDLG_types = "L"*2 + "L"*2 + "L"*2 + "H"*5 + "L"*8
-  def self.create_PRINTDLG
-    pdlg = DL.malloc(DL.sizeof(PRINTDLG_types))
-    pdlg.struct!(PRINTDLG_types, 
-        :lStructSize,
-        :hwndOwner,
-        :hDevMode,
-        :hDevNames,
-        :hDC,
-        :Flags,
-        :nFromPage,
-        :nToPage,
-        :nMinPage,
-        :nMaxPage,
-        :nCopies,
-        :hInstance,
-        :lCustData,
-        :lpfnPrintHook,
-        :lpfnSetupHook,
-        :lpPrintTemplateName,
-        :lpSetupTemplateName,
-        :hPrintTemplate,
-        :hSetupTemplate)
-    #~ pdlg[:lStructSize] = DL.sizeof(PRINTDLG_types)
-    pdlg[:lStructSize] = 66
-    return pdlg
+
+  DEVMODW_types = 'H32HHHHI' + 'H'*8 + 'H'*5 + 'H32H' + 'I'*13
+  DEVMODA_types = 'C32HHHHI' + 'H'*8 + 'H'*5 + 'C32H' + 'I'*13
+  def self.create_DEVMOD(ptrdata, size=DL.sizeof(unicode ? DEVMODW_types : DEVMODA_types))
+    ptrdata ||= DL.malloc(size)
+    ptrdata.struct!(unicode ? DEVMODW_types : DEVMODA_types, 
+      :dmDeviceName,
+      :dmSpecVersion,
+      :dmDriverVersion,
+      :dmSize,
+      :dmDriverExtra,
+      :dmFields,
+          :dmOrientation,
+          :dmPaperSize,
+          :dmPaperLength,
+          :dmPaperWidth,
+          :dmScale,
+          :dmCopies,
+          :dmDefaultSource,
+          :dmPrintQuality,
+      :dmColor,
+      :dmDuplex,
+      :dmYResolution,
+      :dmTTOption,
+      :dmCollate,
+      :dmFormName,
+      :dmLogPixels,
+      :dmBitsPerPel,
+      :dmPelsWidth,
+      :dmPelsHeight,
+        :dmNup,
+      :dmDisplayFrequency,
+      :dmICMMethod,
+      :dmICMIntent,
+      :dmMediaType,
+      :dmDitherType,
+      :dmReserved1,
+      :dmReserved2,
+      :dmPanningWidth,
+      :dmPanningHeight)
+    return ptrdata
   end
 end
 end
