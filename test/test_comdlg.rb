@@ -21,7 +21,7 @@ class TestWin32api4ruby < Test::Unit::TestCase
             :wOutputOffset,
             :wDefault)
 
-      puts "Driver: #{DL::PtrData.new pDevNames+dn_prt[:wDriverOffset]} Device: #{DL::PtrData.new pDevNames+dn_prt[:wDeviceOffset]} Output: #{DL::PtrData.new pDevNames+dn_prt[:wOutputOffset]} Default: #{DL::PtrData.new pDevNames+dn_prt[:wDefault]}"
+      puts "Driver: #{DL::PtrData.new(pDevNames+dn_prt[:wDriverOffset]).to_s_utf8} Device: #{DL::PtrData.new(pDevNames+dn_prt[:wDeviceOffset]).to_s_utf8} Output: #{DL::PtrData.new(pDevNames+dn_prt[:wOutputOffset]).to_s_utf8} Default: #{DL::PtrData.new(pDevNames+dn_prt[:wDefault]).to_s_utf8}"
 
     }
   end
