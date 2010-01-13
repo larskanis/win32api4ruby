@@ -66,9 +66,9 @@ class Comdlg < Base
   end
 
   PRINTDLG_types = "L"*2 + "L"*2 + "L"*2 + "H"*5 + "L"*8
-  def self.create_PRINTDLG
-    pdlg = DL.malloc(DL.sizeof(PRINTDLG_types))
-    pdlg.struct!(PRINTDLG_types, 
+  def self.create_PRINTDLG(data=nil, size=nil)
+    data = prepare_PtrData(data, size || DL.sizeof(PRINTDLG_types))
+    data.struct!(PRINTDLG_types, 
         :lStructSize,
         :hwndOwner,
         :hDevMode,
@@ -89,14 +89,14 @@ class Comdlg < Base
         :hPrintTemplate,
         :hSetupTemplate)
     #~ pdlg[:lStructSize] = DL.sizeof(PRINTDLG_types)
-    pdlg[:lStructSize] = 66
-    return pdlg
+    data[:lStructSize] = 66
+    return data
   end
 
   PAGESETUPDLG_types = "L"*2 + "l"*2 + "L" + "L"*2 + "L"*4*2 + "L"*4 + "p" + "L"
-  def self.create_PAGESETUPDLG
-    pdlg = DL.malloc(DL.sizeof(PAGESETUPDLG_types))
-    pdlg.struct!(PAGESETUPDLG_types, 
+  def self.create_PAGESETUPDLG(data=nil, size=nil)
+    data = prepare_PtrData(data, size || DL.sizeof(PAGESETUPDLG_types))
+    data.struct!(PAGESETUPDLG_types, 
       :lStructSize,
       :hwndOwner,
       :hDevMode,
@@ -112,14 +112,14 @@ class Comdlg < Base
       :lpPageSetupTemplateName,
       :hPageSetupTemplate
     )
-    pdlg[:lStructSize] = DL.sizeof(PAGESETUPDLG_types)
-    return pdlg
+    data[:lStructSize] = DL.sizeof(PAGESETUPDLG_types)
+    return data
   end
   
   PRINTDLGEX_types = "L"*5 + "L"*5 + "P" + "L"*3 + "L" + "S" + "P" + "L" + "P" +"L"*2
-  def self.create_PRINTDLGEX
-    pdlg = DL.malloc(DL.sizeof(PRINTDLGEX_types))
-    pdlg.struct!(PRINTDLGEX_types, 
+  def self.create_PRINTDLGEX(data=nil, size=nil)
+    data = prepare_PtrData(data, size || DL.sizeof(PRINTDLGEX_types))
+    data.struct!(PRINTDLGEX_types, 
       :lStructSize,
       :hwndOwner,
       :hDevMode,
@@ -142,8 +142,8 @@ class Comdlg < Base
       :nStartPage,
       :dwResultAction
     )
-    pdlg[:lStructSize] = DL.sizeof(PRINTDLGEX_types)
-    return pdlg
+    data[:lStructSize] = DL.sizeof(PRINTDLGEX_types)
+    return data
   end
     
 end

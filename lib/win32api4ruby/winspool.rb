@@ -226,9 +226,8 @@ class Winspool < Base
 
   DEVMODW_types = 'H32HHHHI' + 'H'*8 + 'H'*5 + 'H32H' + 'I'*13
   DEVMODA_types = 'C32HHHHI' + 'H'*8 + 'H'*5 + 'C32H' + 'I'*13
-  def self.create_DEVMOD(ptrdata, size=DL.sizeof(unicode ? DEVMODW_types : DEVMODA_types))
-    ptrdata = ensure_PtrData(ptrdata)
-    ptrdata ||= DL.malloc(size)
+  def self.create_DEVMOD(ptrdata=nil, size=nil)
+    ptrdata = prepare_PtrData(ptrdata, size || DL.sizeof(unicode ? DEVMODW_types : DEVMODA_types))
     ptrdata.struct!(unicode ? DEVMODW_types : DEVMODA_types, 
       :dmDeviceName,
       :dmSpecVersion,

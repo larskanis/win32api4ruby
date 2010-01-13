@@ -153,8 +153,10 @@ class Base
     Kernel.set_last_error(0)
   end
 
-  def self.ensure_PtrData(data)
-    case data
+  def self.prepare_PtrData(data=nil, size=nil)
+    raise "neither data nor size given" unless data || size
+    
+    data = case data
       when String
         dlinitdata = DL.malloc(data.length)
         dlinitdata[0, dlinitdata.size] = data
@@ -165,6 +167,8 @@ class Base
       else
         raise "#{data.class} instead of String or DL::PtrData"
     end
+      
+    data || DL.malloc(size)
   end
 end
 end
