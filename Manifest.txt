@@ -11,6 +11,7 @@ lib/win32api4ruby/kernel.rb
 lib/win32api4ruby/user.rb
 lib/win32api4ruby/winspool.rb
 test/all_tests.rb
+test/base.rb
 test/test_comdlg.rb
 test/test_gdi.rb
 test/test_kernel.rb

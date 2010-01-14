@@ -1,7 +1,8 @@
 require "test/unit"
 require "win32api4ruby"
+require "../test/base"
 
-class TestWin32api4ruby < Test::Unit::TestCase
+module TestComdlg
   include Win32api4ruby
 
   def test_print_dialog
@@ -22,13 +23,13 @@ class TestWin32api4ruby < Test::Unit::TestCase
             :wDefault)
 
       u = Base.unicode ? 2 : 1
-      puts "Driver: #{DL::PtrData.new(pDevNames+dn_prt[:wDriverOffset]*u).to_s_utf8} Device: #{DL::PtrData.new(pDevNames+dn_prt[:wDeviceOffset]*u).to_s_utf8} Output: #{DL::PtrData.new(pDevNames+dn_prt[:wOutputOffset]*u).to_s_utf8} Default: #{DL::PtrData.new(pDevNames+dn_prt[:wDefault]*u).to_s_utf8}"
-
+      driver = DL::PtrData.new(pDevNames+dn_prt[:wDriverOffset]*u).to_s_utf8
+      device = DL::PtrData.new(pDevNames+dn_prt[:wDeviceOffset]*u).to_s_utf8
+      output = DL::PtrData.new(pDevNames+dn_prt[:wOutputOffset]*u).to_s_utf8
+      default = DL::PtrData.new(pDevNames+dn_prt[:wDefault]*u).to_s_utf8
+      puts "Driver: #{driver} Device: #{device} Output: #{output} Default: #{default}"
     }
   end
 end
 
-Win32api4ruby::Base.unicode = false
-Test::Unit::AutoRunner.run
-Win32api4ruby::Base.unicode = true
-Test::Unit::AutoRunner.run
+define_test_class(TestComdlg)

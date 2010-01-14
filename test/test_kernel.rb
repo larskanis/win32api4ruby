@@ -1,7 +1,8 @@
 require "test/unit"
 require "win32api4ruby"
+require "../test/base"
 
-class TestWin32api4ruby < Test::Unit::TestCase
+module TestKernel
   include Win32api4ruby
   
   def test_global_lock
@@ -24,7 +25,4 @@ class TestWin32api4ruby < Test::Unit::TestCase
   end
 end
 
-Win32api4ruby::Base.unicode = false
-Test::Unit::AutoRunner.run
-Win32api4ruby::Base.unicode = true
-Test::Unit::AutoRunner.run
+define_test_class(TestKernel)
