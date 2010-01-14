@@ -4,15 +4,28 @@
 
 == DESCRIPTION:
 
-Provides some win32-functions as ruby methods.
+Yet another win32 to ruby wrapper
 
-== FEATURES/PROBLEMS:
+== FEATURES:
 
-* FIX (list of features or problems)
+* printing functions
+* error handling
+* both Unicode and ANSI-functions supported
+* helpers for UTF-8
+
+== PROBLEMS:
+
+* not compatible to win32-gems for Ruby
+* only a small subset of DLL-functions implemented
 
 == SYNOPSIS:
 
-  FIX (code sample of usage)
+short exsample:
+
+  require "win32api4ruby"
+  Win32api4ruby::Base.unicode = true
+  hwnd = Win32api4ruby::User.create_window_ex(0, 'Button'.to_s_win32, name, User::WS_VISIBLE, 0,0,100,100, 0, 0, 0, 0)
+
 
 == REQUIREMENTS:
 
@@ -20,7 +33,8 @@ Provides some win32-functions as ruby methods.
 
 == INSTALL:
 
-* FIX (sudo gem install, anything else)
+* download win32api4ruby-X.Y.Z.gem
+* gem install -l win32api4ruby
 
 == LICENSE:
 
