@@ -1,6 +1,6 @@
 require "test/unit"
 require "win32api4ruby"
-require "../test/base"
+require File.join(File.dirname(__FILE__),"base")
 
 module TestKernel
   include Win32api4ruby
