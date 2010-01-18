@@ -163,6 +163,12 @@ class User < Base
     api_call(unicode ? DispatchMessageW : DispatchMessageA, msg)
   end
   
+  GetDC = USER32['GetDC', 'II']
+  def self.get_dc(hWnd)
+    exception_for_0{
+      api_call(GetDC, hWnd)
+    }
+  end
 
 end
 end

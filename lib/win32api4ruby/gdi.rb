@@ -43,6 +43,16 @@ class Gdi < Base
     NOMIRRORBITMAP = 0x80000000 # Do not Mirror the bitmap in this call
     CAPTUREBLT = 0x40000000 # Include layered windows
   #endif # WINVER >= 0x0500
+    
+  DIB_RGB_COLORS = 0
+  DIB_PAL_COLORS = 1
+
+  BI_RGB = 0
+  BI_RLE8 = 1
+  BI_RLE4 = 2
+  BI_BITFIELDS = 3
+  BI_JPEG = 4
+  BI_PNG = 5
 
 
   #the functions that wrap the Win32API calls enforce type checking on arguments
@@ -110,7 +120,7 @@ class Gdi < Base
       #~ __in  const BITMAPINFO *lpbmi,
       #~ __in  UINT fuColorUse
     #~ );
-    exception_for_0{
+    exception_for_negative{
       api_call(SetDIBitsToDevice, hdc, xDest, yDest, dwWidth, dwHeight, xSrc, ySrc, uStartScan, cScanLines, lpvBits, lpbmi, fuColorUse)
     }
   end
@@ -177,7 +187,7 @@ class Gdi < Base
     }
   end
   #--------------------------------------------------------------------------------------------------------------
-  
+
   DeleteDC = GDI32['DeleteDC', 'LL']
   # nur bei CreateDC verwenden
   def self.delete_dc(hDC)
@@ -327,6 +337,7 @@ class Gdi < Base
       :biYPelsPerMeter,
       :biClrUsed,
       :biClrImportant)
+    ptrdata[:biSize] = ptrdata.size
     return ptrdata
   end
   
