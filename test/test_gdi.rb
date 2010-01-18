@@ -25,6 +25,30 @@ module TestGdi
 
     assert font!=0
   end
+
+  def test_create_bitmap
+    hwnd = User.create_window_ex(0, 'STATIC'.to_s_win32, 'Name'.to_s_win32, User::WS_VISIBLE, 0,0,600,300, 0, 0, 0, 0)
+    hdc = User.get_dc(hwnd)
+    lpbmi = Gdi.create_BITMAPINFOHEADER
+
+    xDest, yDest, dwWidth, dwHeight, xSrc, ySrc = 0,0, 60,50, 0,0
+    lpvBits = ('z000'+'0z00'+'00z0') * (dwWidth/3) * dwHeight
+    uStartScan, cScanLines = 0, dwHeight
+    fuColorUse = Gdi::DIB_RGB_COLORS
+
+    lpbmi[:biWidth] = dwWidth
+    lpbmi[:biHeight] = dwHeight
+    lpbmi[:biPlanes] = 1
+    lpbmi[:biBitCount] = 32
+    lpbmi[:biCompression] = Gdi::BI_RGB
+    lpbmi[:biSizeImage] = lpvBits.length
+    lpbmi[:biXPelsPerMeter] = 0
+    lpbmi[:biYPelsPerMeter] = 0
+    lpbmi[:biClrUsed] = 0
+    lpbmi[:biClrImportant] = 0
+
+    Gdi.set_dibits_to_device(hdc, xDest, yDest, dwWidth, dwHeight, xSrc, ySrc, uStartScan, cScanLines, lpvBits, lpbmi, fuColorUse)
+  end
 end
 
 define_test_class(TestGdi)
