@@ -77,6 +77,43 @@ class Gdi < Base
       api_call(CreateBitmap, nWidth, nHeight, cPlanes, cBitsPerPel, lpvBits)
     }
   end
+  
+  SetDIBits = GDI32['SetDIBits', 'IIIIIPPI']
+  def self.set_dibits(hdc, hbmp, uStartScan, cScanLines, lpvBits, lpbmi, fuColorUse)
+      #~ int SetDIBits(
+        #~ __in  HDC hdc,
+        #~ __in  HBITMAP hbmp,
+        #~ __in  UINT uStartScan,
+        #~ __in  UINT cScanLines,
+        #~ __in  const VOID *lpvBits,
+        #~ __in  const BITMAPINFO *lpbmi,
+        #~ __in  UINT fuColorUse
+      #~ );
+    exception_for_0{
+      api_call(SetDIBits, hdc, hbmp, uStartScan, cScanLines, lpvBits, lpbmi, fuColorUse)
+    }
+  end
+  
+  SetDIBitsToDevice = GDI32['SetDIBitsToDevice', 'I' + 'I'*9 + 'PPI']
+  def self.set_dibits_to_device(hdc, xDest, yDest, dwWidth, dwHeight, xSrc, ySrc, uStartScan, cScanLines, lpvBits, lpbmi, fuColorUse)
+    #~ int SetDIBitsToDevice(
+      #~ __in  HDC hdc,
+      #~ __in  int XDest,
+      #~ __in  int YDest,
+      #~ __in  DWORD dwWidth,
+      #~ __in  DWORD dwHeight,
+      #~ __in  int XSrc,
+      #~ __in  int YSrc,
+      #~ __in  UINT uStartScan,
+      #~ __in  UINT cScanLines,
+      #~ __in  const VOID *lpvBits,
+      #~ __in  const BITMAPINFO *lpbmi,
+      #~ __in  UINT fuColorUse
+    #~ );
+    exception_for_0{
+      api_call(SetDIBitsToDevice, hdc, xDest, yDest, dwWidth, dwHeight, xSrc, ySrc, uStartScan, cScanLines, lpvBits, lpbmi, fuColorUse)
+    }
+  end
   #--------------------------------------------------------------------------------------------------------------
   
   BitBlt = GDI32['BitBlt', 'L'*10]
@@ -272,5 +309,26 @@ class Gdi < Base
       api_call(unicode ? CreateFontW : CreateFontA, nHeight, nWidth, nEscapement, nOrientation, fnWeight, fdwItalic, fdwUnderline, fdwStrikeOut, fdwCharSet, fdwOutputPrecision, fdwClipPrecision, fdwQuality, fdwPitchAndFamily, lpszFace)
     }
   end
+  
+  
+  
+  BITMAPINFOHEADER_types = 'ILLHHIILLII'
+  def self.create_BITMAPINFOHEADER(ptrdata=nil, size=nil)
+    ptrdata = prepare_PtrData(ptrdata, size || DL.sizeof(BITMAPINFOHEADER_types))
+    ptrdata.struct!(BITMAPINFOHEADER_types, 
+      :biSize,
+      :biWidth,
+      :biHeight,
+      :biPlanes,
+      :biBitCount,
+      :biCompression,
+      :biSizeImage,
+      :biXPelsPerMeter,
+      :biYPelsPerMeter,
+      :biClrUsed,
+      :biClrImportant)
+    return ptrdata
+  end
+  
 end
 end
