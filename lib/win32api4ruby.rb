@@ -3,7 +3,7 @@
 require 'dl'
 
 module Win32api4ruby
-  VERSION = '0.1.0'
+  VERSION = '0.1.1'
 
   autoload 'Base', 'win32api4ruby/base'
   autoload 'Comdlg', 'win32api4ruby/comdlg'
