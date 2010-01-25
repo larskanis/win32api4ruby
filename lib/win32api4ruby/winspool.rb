@@ -99,8 +99,10 @@ class Winspool < Base
   DocumentPropertiesA = WINSPOOL['DocumentPropertiesA', 'LLLPpPL']
   def self.document_properties(hWnd, hPrinter, deviceName, devModeInput, mode)
     # erst einmal ermitteln, wieviel Speicher gebraucht wird
-    bufsize = api_call(unicode ? DocumentPropertiesW : DocumentPropertiesA, hWnd, hPrinter, deviceName, nil, devModeInput, 0)
-
+    bufsize = exception_for_negative{
+      api_call(unicode ? DocumentPropertiesW : DocumentPropertiesA, hWnd, hPrinter, deviceName, nil, devModeInput, 0)
+    }
+    
     # und dann die Infos holen
     pDevModeOutput = create_DEVMOD(nil, bufsize)
     res = exception_for_negative{
@@ -116,22 +118,16 @@ class Winspool < Base
   
   OpenPrinterW = WINSPOOL['OpenPrinterW', 'LPpP']
   OpenPrinterA = WINSPOOL['OpenPrinterA', 'LPpP']
+  # BOOL OpenPrinter(
+  #   __in   LPTSTR pPrinterName,
+  #   __out  LPHANDLE phPrinter,
+  #   __in   LPPRINTER_DEFAULTS pDefault
+  # );      
   def self.open_printer(pPrinterName, phPrinter, pDefault)
-      #~ BOOL OpenPrinter(
-        #~ __in   LPTSTR pPrinterName,
-        #~ __out  LPHANDLE phPrinter,
-        #~ __in   LPPRINTER_DEFAULTS pDefault
-      #~ );      
     check(pPrinterName,String)
-    #~ check(phPrinter,String) #handle to string.. return value
     #phPrinter is the PRINTER_DEFAULTS structure.. 0 for default
     # since we want to send through a zero for default, can't enforce string check...
     exception_for_0{
-      p "."*10
-      p pPrinterName
-      p phPrinter
-      p pDefault
-      p "."*10
       api_call(unicode ? OpenPrinterW : OpenPrinterA, pPrinterName, phPrinter, pDefault)
     }
   end
