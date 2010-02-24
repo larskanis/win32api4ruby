@@ -258,7 +258,7 @@ class Gdi < Base
   StartDocW = GDI32['StartDocW', 'LLP']
   StartDocA = GDI32['StartDocA', 'LLP']
   def self.start_doc(hPrinter, pDocInfo)
-    check(hPrinter, Integer); check(pDocInfo, String)
+    check(hPrinter, Integer)
     exception_for_0{
       api_call(unicode ? StartDocW : StartDocA, hPrinter, pDocInfo)
     }
@@ -340,6 +340,18 @@ class Gdi < Base
     ptrdata[:biSize] = ptrdata.size
     return ptrdata
   end
-  
+
+  DOCINFO_types = 'IPPPL'
+  def self.create_DOCINFO(ptrdata=nil, size=nil)
+    ptrdata = prepare_PtrData(ptrdata, size || DL.sizeof(DOCINFO_types))
+    ptrdata.struct!(DOCINFO_types, 
+      :cbSize,
+      :lpszDocName,
+      :lpszOutput,
+      :lpszDatatype,
+      :fwType)
+    ptrdata[:cbSize] = ptrdata.size
+    return ptrdata
+  end
 end
 end
