@@ -49,6 +49,22 @@ module TestGdi
 
     Gdi.set_dibits_to_device(hdc, xDest, yDest, dwWidth, dwHeight, xSrc, ySrc, uStartScan, cScanLines, lpvBits, lpbmi, fuColorUse)
   end
+
+	def test_escape
+    hPrinter = Win32api4ruby::Gdi.create_dc(nil, "Zebra P430i Card Printer USB".to_s_win32, nil, nil)
+		command = ["1B", "MCL", "0D"].pack("H*a*H*")
+
+    documentName = "Test Escape"
+    docinfo = Win32api4ruby::Gdi.create_DOCINFO
+    docinfo[:lpszDocName] = Win32api4ruby::Base.prepare_PtrData(documentName.to_s_win32)
+		Gdi.start_doc(hPrinter, docinfo)
+
+		Gdi.escape(hPrinter, Gdi::PASSTHROUGH, [command.length, command].pack('va*'), nil)
+		
+		Gdi.end_doc(hPrinter)
+		Gdi.delete_dc(hPrinter)
+		GC.start
+	end
 end
 
 define_test_class(TestGdi)

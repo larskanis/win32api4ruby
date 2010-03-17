@@ -189,22 +189,6 @@ class Winspool < Base
   end
   #-----------------------------------------------------------------------------------------------------------------
   
-  WritePrinter = WINSPOOL['WritePrinter', 'LLPLp']
-  def self.write_printer(hPrinter, pBuf, cdBuf, pcWritten)
-      #~ BOOL WritePrinter(
-        #~ __in   HANDLE hPrinter,
-        #~ __in   LPVOID pBuf,
-        #~ __in   DWORD cbBuf,
-        #~ __out  LPDWORD pcWritten
-      #~ );
-    check(hPrinter,Integer); check(pBuf,String);
-    check(cdBuf,Integer);check(pcWritten,String)
-    exception_for_0{
-      api_call(WritePrinter, hPrinter, pBuf, cdBuf, pcWritten)
-    }
-  end
-  #-----------------------------------------------------------------------------------------------------------------
-  
   GetPrinter = WINSPOOL['GetPrinter', 'LLLpLp']
   def self.get_printer(hPrinter, level, pPrinter, cbBuf, pcbNeeded)
     #~ BOOL GetPrinter(
@@ -218,7 +202,26 @@ class Winspool < Base
       api_call(GetPrinter, hPrinter, level, pPrinter, cbBuf, pcbNeeded)
     #~ }
   end
-  #-----------------------------------------------------------------------------------------------------------------
+
+#-----------------------------------------------------------------------------------------------------------------
+
+	WritePrinter = WINSPOOL['WritePrinter', 'IIPIp']
+	def self.write_printer(hPrinter, pBuf)
+	#~ BOOL WritePrinter(
+  #~ __in   HANDLE hPrinter,
+  #~ __in   LPVOID pBuf,
+  #~ __in   DWORD cbBuf,
+  #~ __out  LPDWORD pcWritten
+#~ );
+		pcWritten = DL.malloc(4)
+		pcWritten.struct!('L', :len)
+    exception_for_0{
+      api_call(WritePrinter, hPrinter, pBuf, pBuf.length, pcWritten)
+		}
+		pcWritten[:len]
+  end
+
+#-----------------------------------------------------------------------------------------------------------------
 
   DEVMODW_types = 'H32HHHHI' + 'H'*8 + 'H'*5 + 'H32H' + 'I'*13
   DEVMODA_types = 'C32HHHHI' + 'H'*8 + 'H'*5 + 'C32H' + 'I'*13

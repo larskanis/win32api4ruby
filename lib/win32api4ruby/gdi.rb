@@ -54,8 +54,10 @@ class Gdi < Base
   BI_JPEG = 4
   BI_PNG = 5
 
+	PASSTHROUGH = 19
+	QUERYESCSUPPORT = 8
 
-  #the functions that wrap the Win32API calls enforce type checking on arguments
+	#the functions that wrap the Win32API calls enforce type checking on arguments
   # (through #check). This is to be consistent with the Win32API which will assume
   # different arguments are calling different functions, throwing wacky errors
   #API WRAPPERS
@@ -320,7 +322,20 @@ class Gdi < Base
     }
   end
   
-  
+  Escape = GDI32['Escape', 'IIIIPp']
+  def self.escape(hdc, nEscape, lpvInData, lpvOutData)
+				#~ int Escape(
+				#~ __in   HDC hdc,
+				#~ __in   int nEscape,
+				#~ __in   int cbInput,
+				#~ __in   LPCSTR lpvInData,
+				#~ __out  LPVOID lpvOutData
+			#~ );
+		cbInput = lpvInData.length
+    exception_for_0{
+      api_call(Escape, hdc, nEscape, cbInput, lpvInData, lpvOutData)
+    }
+  end
   
   BITMAPINFOHEADER_types = 'ILLHHIILLII'
   def self.create_BITMAPINFOHEADER(ptrdata=nil, size=nil)
