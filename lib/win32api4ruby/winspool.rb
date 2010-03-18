@@ -151,13 +151,14 @@ class Winspool < Base
   end
   #-----------------------------------------------------------------------------------------------------------------
   
-  StartDocPrinter = WINSPOOL['StartDocPrinter', 'LLLP']
+  StartDocPrinterA = WINSPOOL['StartDocPrinterA', 'LLLP']
+  StartDocPrinterW = WINSPOOL['StartDocPrinterW', 'LLLP']
   def self.start_doc_printer(hPrinter, level, pDocInfo)
-    check(hPrinter, Integer); 
+    check(hPrinter, Integer);
     check(level, Integer); 
-    check(pDocInfo, String)
+#    check(pDocInfo, String)
     exception_for_0{
-      api_call(StartDocPrinter, hPrinter, level, pDocInfo)
+      api_call(unicode ? StartDocPrinterW : StartDocPrinterA, hPrinter, level, pDocInfo)
     }
   end
   #-----------------------------------------------------------------------------------------------------------------

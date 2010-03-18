@@ -52,19 +52,33 @@ module TestGdi
 
 	def test_escape
     hPrinter = Win32api4ruby::Gdi.create_dc(nil, "Zebra P430i Card Printer USB".to_s_win32, nil, nil)
-		command = ["1B", "MCL", "0D"].pack("H*a*H*")
 
     documentName = "Test Escape"
     docinfo = Win32api4ruby::Gdi.create_DOCINFO
     docinfo[:lpszDocName] = Win32api4ruby::Base.prepare_PtrData(documentName.to_s_win32)
 		Gdi.start_doc(hPrinter, docinfo)
 
-		Gdi.escape(hPrinter, Gdi::PASSTHROUGH, [command.length, command].pack('va*'), nil)
-		
+		send_escape(hPrinter, "MCL")
+		send_escape(hPrinter, "MCI")
+
 		Gdi.end_doc(hPrinter)
 		Gdi.delete_dc(hPrinter)
 		GC.start
 	end
+
+	private
+
+	def send_escape(hPrinter, escape)
+		command = ["1B", escape, "0D"].pack("H*a*H*")
+		puts("Send #{escape}")
+		start = Time.now
+		Gdi.escape(hPrinter, Gdi::PASSTHROUGH, [command.length, command].pack('va*'), nil)
+#    dur = Time.now - start
+#		puts("Time for #{escape}: #{dur}s")
+#		puts("Sleep for 5s...")
+		sleep(5)
+	end
+
 end
 
 define_test_class(TestGdi)
