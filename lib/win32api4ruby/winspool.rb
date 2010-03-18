@@ -222,6 +222,18 @@ class Winspool < Base
 		pcWritten[:len]
   end
 
+
+	DOC_INFO_1W_types = 'PPP'
+	DOC_INFO_1A_types = 'PPP'
+	def self.create_DOC_INFO_1(ptrdata=nil, size=nil)
+		ptrdata = prepare_PtrData(ptrdata, size || DL.sizeof(unicode ? DOC_INFO_1W_types : DOC_INFO_1A_types))
+		ptrdata.struct!(unicode ? DOC_INFO_1W_types : DOC_INFO_1A_types,
+			:pDocName,
+			:pOutputFile,
+			:pDatatype)
+		return ptrdata
+	end
+
 #-----------------------------------------------------------------------------------------------------------------
 
   DEVMODW_types = 'H32HHHHI' + 'H'*8 + 'H'*5 + 'H32H' + 'I'*13

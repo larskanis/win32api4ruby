@@ -11,4 +11,5 @@ module Win32api4ruby
   autoload 'Kernel', 'win32api4ruby/kernel'
   autoload 'User', 'win32api4ruby/user'
   autoload 'Winspool', 'win32api4ruby/winspool'
+  autoload 'ZebraDll', 'win32api4ruby/zebra_dll'
 end
