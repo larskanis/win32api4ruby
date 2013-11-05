@@ -5,6 +5,7 @@ require 'ffi'
 module Win32api4ruby
 module AbstractMemoryExtensions
   ZeroZeroString = "\0\0"
+
   def to_s_utf16
     i = 0
     while self.get_bytes(i,2)!=ZeroZeroString
@@ -52,7 +53,7 @@ module StringExtensions
   else
     def to_s_win32
       if Win32api4ruby::Base.unicode
-        self.encode(Encoding::UTF_16LE, Encoding::UTF_8) << AbstractMemoryExtensions::ZeroZeroString
+        (self+"\0").encode(Encoding::UTF_16LE, Encoding::UTF_8)
       else
         self.encode(Encoding::Windows_1252, Encoding::UTF_8)
       end
