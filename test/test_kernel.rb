@@ -1,5 +1,6 @@
 require "test/unit"
 require "win32api4ruby"
+require "ffi"
 require File.join(File.dirname(__FILE__),"base")
 
 module TestKernel
@@ -12,11 +13,15 @@ module TestKernel
   end
 
   def test_format_message
-    message = DL.malloc(1024) #store 1kb space
+    message = FFI::MemoryPointer.new(1024) #store 1kb space
     Kernel.format_message(0x1000, '', 100, 0, message, 1024, '')
-    l = message.to_s_utf8.length
-    assert l > 5
-    assert l < 100
+    mu = message.to_s_utf8
+    assert mu.length > 5
+    assert mu.length < 100
+    if String.method_defined?(:encoding)
+      assert mu.valid_encoding?
+      assert_equal Encoding::UTF_8, mu.encoding
+    end
   end
 
   def test_get_set_last_error

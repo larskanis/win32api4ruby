@@ -178,7 +178,7 @@ class Base
         raise "#{data.class} instead of String or FFI::AbstractMemory"
     end
 
-    data || FFI::MemoryPointer(size)
+    data || FFI::MemoryPointer.new(size)
   end
 end
 end
