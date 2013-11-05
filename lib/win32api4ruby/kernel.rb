@@ -45,8 +45,8 @@ class Kernel  < Base
     SetLastError(v)
   end
 
-  attach_function :FormatMessageW, [:long, :long, :pointer, :long, :long, :pointer, :long, :pointer], :long
-  attach_function :FormatMessageA, [:long, :long, :pointer, :long, :long, :pointer, :long, :pointer], :long
+  attach_function :FormatMessageW, [:long, :pointer, :long, :long, :pointer, :long, :pointer], :long
+  attach_function :FormatMessageA, [:long, :pointer, :long, :long, :pointer, :long, :pointer], :long
   def self.format_message(dwFlags, lpSource, dwMessageID, dwLanguageID, lpBuffer, nSize, arguments)
     check(dwFlags,Integer);
     check(lpSource,String);
