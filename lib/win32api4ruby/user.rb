@@ -5,7 +5,9 @@ require 'win32api4ruby/base'
 
 module Win32api4ruby
 class User < Base
-  USER32 = DL.dlopen('user32')
+  extend FFI::Library
+  ffi_lib 'user32'
+  ffi_convention :stdcall
 
   IMAGE_ENHMETAFILE = 3
   LR_DEFAULTCOLOR = 0x00000000
@@ -42,10 +44,10 @@ class User < Base
   # different arguments are calling different functions, throwing wacky errors
   #API WRAPPERS
   # --------------------------------------------------------------------------------------------------------------
-  LoadImageW = USER32['LoadImageW', 'LLPLLLL']
-  LoadImageA = USER32['LoadImageA', 'LLPLLLL']
+  attach_function :LoadImageW, [ :long, :pointer, :uint, :int, :int, :uint ], :long
+  attach_function :LoadImageA, [ :long, :pointer, :uint, :int, :int, :uint ], :long
   def self.load_image(hinst, lpszName, uType, cxDesired, cyDesired, fuLoad)
-      #~ HANDLE LoadImage(      
+      #~ HANDLE LoadImage(
           #~ HINSTANCE hinst,
           #~ LPCTSTR lpszName,
           #~ UINT uType,
@@ -54,13 +56,14 @@ class User < Base
           #~ UINT fuLoad
       #~ );
     exception_for_0{
-      api_call(unicode ? LoadImageW : LoadImageA, hinst, lpszName, uType, cxDesired, cyDesired, fuLoad)
+      args = hinst, lpszName, uType, cxDesired, cyDesired, fuLoad
+      unicode ? LoadImageW(*args) : LoadImageA(*args)
     }
   end
   #--------------------------------------------------------------------------------------------------------------
-  
-  DrawTextW = USER32['DrawTextW', 'LLpLpL']
-  DrawTextA = USER32['DrawTextA', 'LLpLpL']
+
+  attach_function :DrawTextW, [ :long, :pointer, :int, :pointer, :uint ], :int
+  attach_function :DrawTextA, [ :long, :pointer, :int, :pointer, :uint ], :int
   def self.draw_text(hdc, lpchText, nCount, lpRect, uFormat)
       #~ int DrawText(
         #~ __in     HDC hDC,
@@ -70,42 +73,45 @@ class User < Base
         #~ __in     UINT uFormat
       #~ );
     exception_for_0{
-      api_call(unicode ? DrawTextW : DrawTextA, hdc, lpchText, nCount, lpRect, uFormat)
+      args = hdc, lpchText, nCount, lpRect, uFormat
+      unicode ? DrawTextW(*args) : DrawTextA(*args)
     }
   end
   #--------------------------------------------------------------------------------------------------------------
-  
-  CallWindowProcW = USER32['CallWindowProcW', 'LPLLLL']
-  CallWindowProcA = USER32['CallWindowProcA', 'LPLLLL']
+
+  attach_function :CallWindowProcW, [ :pointer, :long, :uint, :int, :int ], :long
+  attach_function :CallWindowProcA, [ :pointer, :long, :uint, :int, :int ], :long
   def self.call_window_proc(lpPrevWndFunc, hWnd, msg, wParam, lParam)
-      #~ LRESULT CallWindowProc(      
+      #~ LRESULT CallWindowProc(
           #~ WNDPROC lpPrevWndFunc,
           #~ HWND hWnd,
           #~ UINT Msg,
           #~ WPARAM wParam,
           #~ LPARAM lParam
       #~ );
-    api_call(unicode ? CallWindowProc : CallWindowProcA, lpPrevWndFunc, hWnd, msg, wParam, lParam)
+    args = lpPrevWndFunc, hWnd, msg, wParam, lParam
+    unicode ? CallWindowProc(*args) : CallWindowProcA(*args)
   end
   #--------------------------------------------------------------------------------------------------------------
-  
-  SetWindowLongW = USER32['SetWindowLongW', 'PLLP']
-  SetWindowLongA = USER32['SetWindowLongA', 'PLLP']
+
+  attach_function :SetWindowLongW, [ :long, :int, :long ], :long
+  attach_function :SetWindowLongA, [ :long, :int, :long ], :long
   def self.set_window_long(hWnd, nIndex, dwNewLong)
-      #~ LONG SetWindowLong(      
+      #~ LONG SetWindowLong(
           #~ HWND hWnd,
           #~ int nIndex,
           #~ LONG dwNewLong
       #~ );
     exception_for_nil{
-      api_call(unicode ? SetWindowLongW : SetWindowLongA, hWnd, nIndex, dwNewLong)
+      args = hWnd, nIndex, dwNewLong
+      unicode ? SetWindowLongW(*args) : SetWindowLongA(*args)
     }
   end
-  
-  CreateWindowExW = USER32['CreateWindowExW', 'LLSSLIIIILLLL']
-  CreateWindowExA = USER32['CreateWindowExA', 'LLSSLIIIILLLL']
+
+  attach_function :CreateWindowExW, [ :uint32, :pointer, :pointer, :uint32, :int, :int, :int, :int, :long, :long, :long, :pointer ], :long
+  attach_function :CreateWindowExA, [ :uint32, :pointer, :pointer, :uint32, :int, :int, :int, :int, :long, :long, :long, :pointer ], :long
   def self.create_window_ex(dwExStyle, lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam)
-    #~ HWND CreateWindow(      
+    #~ HWND CreateWindow(
         #~ DWORD dwExStyle,
         #~ LPCTSTR lpClassName,
         #~ LPCTSTR lpWindowName,
@@ -120,53 +126,55 @@ class User < Base
         #~ LPVOID lpParam
     #~ );
     exception_for_0{
-      api_call(unicode ? CreateWindowExW : CreateWindowExA, dwExStyle, lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam)
-    }
-  end
-  
-  UpdateWindow = USER32['UpdateWindow', 'LL']
-  def self.update_window(hwnd)
-    exception_for_0{
-      api_call(UpdateWindow, hwnd)
+      args = dwExStyle, lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam
+      unicode ? CreateWindowExW(*args) : CreateWindowExA(*args)
     }
   end
 
-  DestroyWindow = USER32['DestroyWindow', 'LL']
+  attach_function :UpdateWindow, [ :long ], :long
+  def self.update_window(hwnd)
+    exception_for_0{
+      UpdateWindow(hwnd)
+    }
+  end
+
+  attach_function :DestroyWindow, [ :long ], :long
   def self.destroy_window(hwnd)
     exception_for_0{
-      api_call(DestroyWindow, hwnd)
+      DestroyWindow(hwnd)
     }
   end
 
   #~ {GetMessage will return True until it gets a WM_OUIT message.
   #~ So this program will keep running untill you Post a Quit Message}
-  GetMessageW = USER32['GetMessageW', 'LpLLL']
-  GetMessageA = USER32['GetMessageA', 'LpLLL']
+  attach_function :GetMessageW, [ :pointer, :long, :long, :long ], :long
+  attach_function :GetMessageA, [ :pointer, :long, :long, :long ], :long
   def self.get_message(lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax)
     exception_for_0{
-      api_call(unicode ? GetMessageW : GetMessageA, lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax)
+      args = lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax
+      unicode ? GetMessageW(*args) : GetMessageA(*args)
     }
   end
-       
-  #~ {Translate any WM_KEYDOWN keyboard Msg to a WM_CHAR message} 
-  TranslateMessage = USER32['TranslateMessage', 'LP']
+
+  #~ {Translate any WM_KEYDOWN keyboard Msg to a WM_CHAR message}
+  attach_function :TranslateMessage, [ :pointer ], :long
   def self.translate_message(msg)
-    api_call(TranslateMessage, msg)
+    TranslateMessage(msg)
   end
-                               
-  #~ {this Sends Msg to the address of the 
+
+  #~ {this Sends Msg to the address of the
   #~ "Window Procedure" set in the Resistered
   #~ Window's Class for that window}
-  DispatchMessageW = USER32['DispatchMessageW', 'LP']
-  DispatchMessageA = USER32['DispatchMessageA', 'LP']
+  attach_function :DispatchMessageW, [ :pointer ], :long
+  attach_function :DispatchMessageA, [ :pointer ], :long
   def self.dispatch_message(msg)
-    api_call(unicode ? DispatchMessageW : DispatchMessageA, msg)
+    unicode ? DispatchMessageW(msg) : DispatchMessageA(msg)
   end
-  
-  GetDC = USER32['GetDC', 'II']
+
+  attach_function :GetDC, [ :long ], :long
   def self.get_dc(hWnd)
     exception_for_0{
-      api_call(GetDC, hWnd)
+      GetDC(hWnd)
     }
   end
 
