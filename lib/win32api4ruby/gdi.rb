@@ -4,7 +4,9 @@ require 'win32api4ruby/base'
 
 module Win32api4ruby
 class Gdi < Base
-  GDI32 = DL.dlopen('gdi32')
+  extend FFI::Library
+  ffi_lib 'gdi32'
+  ffi_convention :stdcall
 
 
   R2_BLACK = 1   #  0
@@ -43,7 +45,7 @@ class Gdi < Base
     NOMIRRORBITMAP = 0x80000000 # Do not Mirror the bitmap in this call
     CAPTUREBLT = 0x40000000 # Include layered windows
   #endif # WINVER >= 0x0500
-    
+
   DIB_RGB_COLORS = 0
   DIB_PAL_COLORS = 1
 
@@ -61,9 +63,8 @@ class Gdi < Base
   # (through #check). This is to be consistent with the Win32API which will assume
   # different arguments are calling different functions, throwing wacky errors
   #API WRAPPERS
-  #--------------------------------------------------------------------------------------------------------------
-  
-  CreateCompatibleBitmap = GDI32['CreateCompatibleBitmap', 'LLL']
+
+  attach_function :CreateCompatibleBitmap, [ :long, :int, :int ], :int
   def self.create_compatible_bitmap(hdc, nWidth, nHeight)
         #~ HBITMAP CreateCompatibleBitmap(
           #~ __in  HDC hdc,
@@ -71,12 +72,11 @@ class Gdi < Base
           #~ __in  int nHeight
         #~ );
     exception_for_0{
-      api_call(CreateCompatibleBitmap, hdc, nWidth, nHeight)
+      CreateCompatibleBitmap(hdc, nWidth, nHeight)
     }
   end
-  #--------------------------------------------------------------------------------------------------------------
-  
-  CreateBitmap = GDI32['CreateBitmap', 'LLLLLP']
+
+  attach_function :CreateBitmap, [ :int, :int, :uint, :uint, :pointer ], :long
   def self.create_bitmap(nWidth, nHeight, cPlanes, cBitsPerPel, lpvBits)
       #~ HBITMAP CreateBitmap(
         #~ __in  int nWidth,
@@ -86,11 +86,11 @@ class Gdi < Base
         #~ __in  const VOID *lpvBits
       #~ );
     exception_for_0{
-      api_call(CreateBitmap, nWidth, nHeight, cPlanes, cBitsPerPel, lpvBits)
+      CreateBitmap(nWidth, nHeight, cPlanes, cBitsPerPel, lpvBits)
     }
   end
-  
-  SetDIBits = GDI32['SetDIBits', 'IIIIIPPI']
+
+  attach_function :SetDIBits, [ :int, :int, :uint, :uint, :pointer, :pointer, :uint ], :long
   def self.set_dibits(hdc, hbmp, uStartScan, cScanLines, lpvBits, lpbmi, fuColorUse)
       #~ int SetDIBits(
         #~ __in  HDC hdc,
@@ -102,11 +102,11 @@ class Gdi < Base
         #~ __in  UINT fuColorUse
       #~ );
     exception_for_0{
-      api_call(SetDIBits, hdc, hbmp, uStartScan, cScanLines, lpvBits, lpbmi, fuColorUse)
+      SetDIBits(hdc, hbmp, uStartScan, cScanLines, lpvBits, lpbmi, fuColorUse)
     }
   end
-  
-  SetDIBitsToDevice = GDI32['SetDIBitsToDevice', 'I' + 'I'*9 + 'PPI']
+
+  attach_function :SetDIBitsToDevice, [ :long, :int, :int, :uint, :uint, :int, :int, :uint, :uint, :pointer, :pointer, :uint ], :long
   def self.set_dibits_to_device(hdc, xDest, yDest, dwWidth, dwHeight, xSrc, ySrc, uStartScan, cScanLines, lpvBits, lpbmi, fuColorUse)
     #~ int SetDIBitsToDevice(
       #~ __in  HDC hdc,
@@ -123,12 +123,12 @@ class Gdi < Base
       #~ __in  UINT fuColorUse
     #~ );
     exception_for_negative{
-      api_call(SetDIBitsToDevice, hdc, xDest, yDest, dwWidth, dwHeight, xSrc, ySrc, uStartScan, cScanLines, lpvBits, lpbmi, fuColorUse)
+      SetDIBitsToDevice(hdc, xDest, yDest, dwWidth, dwHeight, xSrc, ySrc, uStartScan, cScanLines, lpvBits, lpbmi, fuColorUse)
     }
   end
-  #--------------------------------------------------------------------------------------------------------------
-  
-  BitBlt = GDI32['BitBlt', 'L'*10]
+
+
+  attach_function :BitBlt, [ :long, :int, :int, :int, :int, :long, :int, :int, :uint ], :long
   def self.bit_blt(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc, dwRop)
       #~ BOOL BitBlt(
         #~ __in  HDC hdcDest,
@@ -142,13 +142,13 @@ class Gdi < Base
         #~ __in  DWORD dwRop
       #~ );
     exception_for_0{
-      api_call(BitBlt, hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc, dwRop)
+      BitBlt(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc, dwRop)
     }
   end
-  #--------------------------------------------------------------------------------------------------------------
-  
-  TextOutW = GDI32['TextOutW', 'LLLLPL']
-  TextOutA = GDI32['TextOutA', 'LLLLPL']
+
+
+  attach_function :TextOutW, [ :long, :int, :int, :pointer, :int ], :long
+  attach_function :TextOutA, [ :long, :int, :int, :pointer, :int ], :long
   def self.text_out(hdc, nXStart, nYStart, lpString, cbString)
       #~ BOOL TextOut(
         #~ __in  HDC hdc,
@@ -158,25 +158,26 @@ class Gdi < Base
         #~ __in  int cbString
       #~ );
     exception_for_0{
-      api_call(unicode ? TextOutW : TextOutA, hdc, nXStart, nYStart, lpString, cbString)
+      args = hdc, nXStart, nYStart, lpString, cbString
+      unicode ? TextOutW(*args) : TextOutA(*args)
     }
   end
-  #--------------------------------------------------------------------------------------------------------------
-  
-  SelectObject = GDI32['SelectObject', 'LLL']
+
+
+  attach_function :SelectObject, [ :long, :long ], :long
   def self.select_object(hdc, hgdiobj)
       #~ HGDIOBJ SelectObject(
-        #~ HDC hdc, 
+        #~ HDC hdc,
         #~ HGDIOBJ hgdiobj
-      #~ ); 
+      #~ );
     #~ check(hMovableMemory,Integer)
     exception_for_0{
-      api_call(SelectObject, hdc, hgdiobj)
+      SelectObject(hdc, hgdiobj)
     }
   end
-  #--------------------------------------------------------------------------------------------------------------
-  
-  GetObject = GDI32['GetObject', 'LLLp']
+
+
+  attach_function :SelectObject, [ :long, :int, :pointer ], :long
   def self.get_object(hgdiobj, cbBuffer, lpvObject)
       #~ int GetObject(
         #~ __in   HGDIOBJ hgdiobj,
@@ -185,12 +186,12 @@ class Gdi < Base
       #~ );
     #~ check(hMovableMemory,Integer)
     exception_for_0{
-      api_call(GetObject, hgdiobj, cbBuffer, lpvObject)
+      GetObject(hgdiobj, cbBuffer, lpvObject)
     }
   end
-  #--------------------------------------------------------------------------------------------------------------
 
-  DeleteDC = GDI32['DeleteDC', 'LL']
+
+  attach_function :DeleteDC, [ :long ], :long
   # nur bei CreateDC verwenden
   def self.delete_dc(hDC)
       #~ BOOL DeleteDC(
@@ -198,12 +199,12 @@ class Gdi < Base
       #~ );
 
     exception_for_0{
-      api_call(DeleteDC, hDC)
+      DeleteDC(hDC)
     }
   end
-  #--------------------------------------------------------------------------------------------------------------
-  
-  DeleteObject = GDI32['DeleteObject', 'LL']
+
+
+  attach_function :DeleteObject, [ :long ], :long
   # nur bei CreateDC verwenden
   def self.delete_object(hDC)
       #~ BOOL DeleteDC(
@@ -211,25 +212,25 @@ class Gdi < Base
       #~ );
 
     exception_for_0{
-      api_call(DeleteObject, hDC)
+      DeleteObject(hDC)
     }
   end
-  #--------------------------------------------------------------------------------------------------------------
-  
-  CreateCompatibleDC = GDI32['CreateCompatibleDC', 'LL']
+
+
+  attach_function :CreateCompatibleDC, [ :long ], :long
   def self.create_compatible_dc(hdc)
       #~ HDC CreateCompatibleDC(
         #~ __in  HDC hdc
       #~ );
     #~ check(hMovableMemory,Integer)
     exception_for_0{
-      api_call(CreateCompatibleDC, hdc)
+      CreateCompatibleDC(hdc)
     }
   end
-  #--------------------------------------------------------------------------------------------------------------
-  
-  CreateDCW = GDI32['CreateDCW', 'LPPPP']
-  CreateDCA = GDI32['CreateDCA', 'LPPPP']
+
+
+  attach_function :CreateDCW, [ :pointer, :pointer, :pointer, :pointer ], :long
+  attach_function :CreateDCA, [ :pointer, :pointer, :pointer, :pointer ], :long
   def self.create_dc(lpszDriver, lpszDevice, lpszOutput, lpInitData)
        #~ HDC CreateDC(
             #~ LPCTSTR lpszDriver,
@@ -240,65 +241,67 @@ class Gdi < Base
 
     #~ hDC = CreateDC( 0, sPrnName, 0, dm );
     exception_for_0{
-      api_call(unicode ? CreateDCW : CreateDCA, lpszDriver, lpszDevice, lpszOutput, lpInitData)
+      args = lpszDriver, lpszDevice, lpszOutput, lpInitData
+      unicode ? CreateDCW(*args) : CreateDCA(*args)
     }
   end
-  #--------------------------------------------------------------------------------------------------------------
-  
-  AbortDoc = GDI32['AbortDoc', 'LL']
+
+
+  attach_function :AbortDoc, [ :long ], :long
   def self.abort_doc(hPrinter)
       #~ int AbortDoc(
         #~ __in  HDC hdc
       #~ );
     check(hPrinter, Integer)
     exception_for_0{
-      api_call(AbortDoc, hPrinter)
+      AbortDoc(hPrinter)
     }
   end
-  #--------------------------------------------------------------------------------------------------------------
-  
-  StartDocW = GDI32['StartDocW', 'LLP']
-  StartDocA = GDI32['StartDocA', 'LLP']
+
+
+  attach_function :StartDocW, [ :long, :pointer ], :long
+  attach_function :StartDocA, [ :long, :pointer ], :long
   def self.start_doc(hPrinter, pDocInfo)
     check(hPrinter, Integer)
     exception_for_0{
-      api_call(unicode ? StartDocW : StartDocA, hPrinter, pDocInfo)
+      args = hPrinter, pDocInfo
+      unicode ? StartDocW(*args) : StartDocA(*args)
     }
   end
-  #--------------------------------------------------------------------------------------------------------------
-  
-  EndDoc = GDI32['EndDoc', 'LL']
+
+
+  attach_function :EndDoc, [ :long ], :long
   def self.end_doc(hPrinter)
     check(hPrinter, Integer)
     exception_for_0{
-      api_call(EndDoc, hPrinter)
+      EndDoc(hPrinter)
     }
   end
-  #--------------------------------------------------------------------------------------------------------------
-  
-  StartPage = GDI32['StartPage', 'LL']
+
+
+  attach_function :StartPage, [ :long ], :long
   def self.start_page(hPrinter)
     check(hPrinter, Integer)
     exception_for_0{
-      api_call(StartPage, hPrinter)
+      StartPage(hPrinter)
     }
   end
-  #--------------------------------------------------------------------------------------------------------------
-  
-  EndPage = GDI32['EndPage', 'LL']
+
+
+  attach_function :EndPage, [ :long ], :long
   def self.end_page(hPrinter)
       #~ int EndPage(
         #~ __in  HDC hdc
       #~ );
     check(hPrinter, Integer)
     exception_for_0{
-      api_call(EndPage, hPrinter)
+      EndPage(hPrinter)
     }
   end
-  #--------------------------------------------------------------------------------------------------------------
-  
-  CreateFontW = GDI32['CreateFontW', 'LLLLLLLLLLLLLLP']
-  CreateFontA = GDI32['CreateFontA', 'LLLLLLLLLLLLLLP']
+
+
+  attach_function :CreateFontW, [ :int, :int, :int, :int, :int, :ulong, :ulong, :ulong, :ulong, :ulong, :ulong, :ulong, :ulong, :pointer ], :long
+  attach_function :CreateFontA, [ :int, :int, :int, :int, :int, :ulong, :ulong, :ulong, :ulong, :ulong, :ulong, :ulong, :ulong, :pointer ], :long
   def self.create_font(nHeight, nWidth, nEscapement, nOrientation, fnWeight, fdwItalic, fdwUnderline, fdwStrikeOut, fdwCharSet, fdwOutputPrecision, fdwClipPrecision, fdwQuality, fdwPitchAndFamily, lpszFace)
       #~ HFONT CreateFont(
         #~ __in  int nHeight,
@@ -318,11 +321,12 @@ class Gdi < Base
       #~ );
     #~ check(hPrinter, Integer)
     exception_for_0{
-      api_call(unicode ? CreateFontW : CreateFontA, nHeight, nWidth, nEscapement, nOrientation, fnWeight, fdwItalic, fdwUnderline, fdwStrikeOut, fdwCharSet, fdwOutputPrecision, fdwClipPrecision, fdwQuality, fdwPitchAndFamily, lpszFace)
+      args = nHeight, nWidth, nEscapement, nOrientation, fnWeight, fdwItalic, fdwUnderline, fdwStrikeOut, fdwCharSet, fdwOutputPrecision, fdwClipPrecision, fdwQuality, fdwPitchAndFamily, lpszFace
+      unicode ? CreateFontW(*args) : CreateFontA(*args)
     }
   end
-  
-  Escape = GDI32['Escape', 'IIIIPp']
+
+  attach_function :Escape, [ :ulong, :int, :int, :pointer, :pointer ], :int
   def self.escape(hdc, nEscape, lpvInData, lpvOutData)
 				#~ int Escape(
 				#~ __in   HDC hdc,
@@ -333,38 +337,60 @@ class Gdi < Base
 			#~ );
 		cbInput = lpvInData.length
     exception_for_0{
-      api_call(Escape, hdc, nEscape, cbInput, lpvInData, lpvOutData)
+      Escape(hdc, nEscape, cbInput, lpvInData, lpvOutData)
     }
   end
-  
-  BITMAPINFOHEADER_types = 'ILLHHIILLII'
+
+  class BITMAPINFOHEADER < FFI::Struct
+    # BITMAPINFOHEADER {
+    #   DWORD biSize;
+    #   LONG  biWidth;
+    #   LONG  biHeight;
+    #   WORD  biPlanes;
+    #   WORD  biBitCount;
+    #   DWORD biCompression;
+    #   DWORD biSizeImage;
+    #   LONG  biXPelsPerMeter;
+    #   LONG  biYPelsPerMeter;
+    #   DWORD biClrUsed;
+    #   DWORD biClrImportant;
+    # }
+    layout :biSize, :uint32,
+      :biWidth, :long,
+      :biHeight, :long,
+      :biPlanes, :uint16,
+      :biBitCount, :uint16,
+      :biCompression, :uint32,
+      :biSizeImage, :uint32,
+      :biXPelsPerMeter, :long,
+      :biYPelsPerMeter, :long,
+      :biClrUsed, :uint32,
+      :biClrImportant, :uint32
+  end
+
   def self.create_BITMAPINFOHEADER(ptrdata=nil, size=nil)
-    ptrdata = prepare_PtrData(ptrdata, size || DL.sizeof(BITMAPINFOHEADER_types))
-    ptrdata.struct!(BITMAPINFOHEADER_types, 
-      :biSize,
-      :biWidth,
-      :biHeight,
-      :biPlanes,
-      :biBitCount,
-      :biCompression,
-      :biSizeImage,
-      :biXPelsPerMeter,
-      :biYPelsPerMeter,
-      :biClrUsed,
-      :biClrImportant)
+    ptrdata = BITMAPINFOHEADER.new(ptrdata || (size && FFI::MemoryPointer.new(size)))
     ptrdata[:biSize] = ptrdata.size
     return ptrdata
   end
 
-  DOCINFO_types = 'IPPPL'
+  class DOCINFO < FFI::Struct
+      # struct {
+      #   int     cbSize;
+      #   LPCTSTR lpszDocName;
+      #   LPCTSTR lpszOutput;
+      #   LPCTSTR lpszDatatype;
+      #   DWORD   fwType;
+      # } DOCINFO
+    layout :cbSize, :int,
+      :lpszDocName, :pointer,
+      :lpszOutput, :pointer,
+      :lpszDatatype, :pointer,
+      :fwType, :uint32
+  end
+
   def self.create_DOCINFO(ptrdata=nil, size=nil)
-    ptrdata = prepare_PtrData(ptrdata, size || DL.sizeof(DOCINFO_types))
-    ptrdata.struct!(DOCINFO_types, 
-      :cbSize,
-      :lpszDocName,
-      :lpszOutput,
-      :lpszDatatype,
-      :fwType)
+    ptrdata = DOCINFO.new(ptrdata || (size && FFI::MemoryPointer.new(size)))
     ptrdata[:cbSize] = ptrdata.size
     return ptrdata
   end
