@@ -1,7 +1,5 @@
 # -*- coding: UTF-8 -*-
 
-require 'win32api4ruby/compat'
-
 module Win32api4ruby
   VERSION = '0.1.1'
 
