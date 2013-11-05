@@ -110,7 +110,7 @@ class User < Base
 
   attach_function :CreateWindowExW, [ :uint32, :pointer, :pointer, :uint32, :int, :int, :int, :int, :long, :long, :long, :pointer ], :long
   attach_function :CreateWindowExA, [ :uint32, :pointer, :pointer, :uint32, :int, :int, :int, :int, :long, :long, :long, :pointer ], :long
-  def self.create_window_ex(dwExStyle, lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam)
+  def self.create_window_ex(dwExStyle, lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam=nil)
     #~ HWND CreateWindow(
         #~ DWORD dwExStyle,
         #~ LPCTSTR lpClassName,

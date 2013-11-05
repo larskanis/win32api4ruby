@@ -53,9 +53,9 @@ module StringExtensions
   else
     def to_s_win32
       if Win32api4ruby::Base.unicode
-        (self+"\0").encode(Encoding::UTF_16LE, Encoding::UTF_8)
+        FFI::MemoryPointer.from_string (self+"\0").encode(Encoding::UTF_16LE, Encoding::UTF_8)
       else
-        self.encode(Encoding::Windows_1252, Encoding::UTF_8)
+        FFI::MemoryPointer.from_string self.encode(Encoding::Windows_1252, Encoding::UTF_8)
       end
     end
   end

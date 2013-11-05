@@ -27,7 +27,7 @@ module TestGdi
   end
 
   def test_create_bitmap
-    hwnd = User.create_window_ex(0, 'STATIC'.to_s_win32, 'Name'.to_s_win32, User::WS_VISIBLE, 0,0,600,300, 0, 0, 0, 0)
+    hwnd = User.create_window_ex(0, 'STATIC'.to_s_win32, 'Name'.to_s_win32, User::WS_VISIBLE, 0,0,600,300, 0, 0, 0)
     hdc = User.get_dc(hwnd)
     lpbmi = Gdi.create_BITMAPINFOHEADER
 
@@ -51,6 +51,7 @@ module TestGdi
   end
 
 	def test_escape
+    #~ hPrinter = Win32api4ruby::Gdi.create_dc(nil, "Microsoft XPS Document Writer".to_s_win32, nil, nil)
     hPrinter = Win32api4ruby::Gdi.create_dc(nil, "Zebra P430i Card Printer USB".to_s_win32, nil, nil)
 
     documentName = "Test Escape"
