@@ -1,48 +1,67 @@
 # -*- coding: UTF-8 -*-
 
-require "dl"
-require 'iconv'
+require 'ffi'
 
 module Win32api4ruby
-module DL_PtrDataExtensions
+module AbstractMemoryExtensions
   ZeroZeroString = "\0\0"
   def to_s_utf16
     i = 0
-    while self[i,2]!=ZeroZeroString
+    while self.get_bytes(i,2)!=ZeroZeroString
       i+=2
     end
-    self[0,i]
+    self.get_bytes(0,i)
   end
-  
-  # Converts the Data containing a Unicode or Ansi-Text based on the current
-  # Win32api4ruby::Base.unicode setting to UTF-8.
-  def to_s_utf8
-    if Win32api4ruby::Base.unicode
-      @@iconv_Utf16ToUtf8 ||= Iconv.new('utf-8', 'utf-16le')
-      @@iconv_Utf16ToUtf8.iconv to_s_utf16
-    else
-      @@iconv_AnsiToUtf8 ||= Iconv.new('utf-8', 'windows-1252')
-      @@iconv_AnsiToUtf8.iconv to_s
+
+  if RUBY_VERSION<'1.9'
+    # Converts the Data containing a Unicode or Ansi-Text based on the current
+    # Win32api4ruby::Base.unicode setting to UTF-8.
+    def to_s_utf8
+      if Win32api4ruby::Base.unicode
+        @@iconv_Utf16ToUtf8 ||= Iconv.new('utf-8', 'utf-16le')
+        @@iconv_Utf16ToUtf8.iconv to_s_utf16
+      else
+        @@iconv_AnsiToUtf8 ||= Iconv.new('utf-8', 'windows-1252')
+        @@iconv_AnsiToUtf8.iconv to_s
+      end
+    end
+  else
+    def to_s_utf8
+      if Win32api4ruby::Base.unicode
+        to_s_utf16.encode(Encoding::UTF_8, Encoding::UTF_16LE)
+      else
+        get_string(0).encode(Encoding::UTF_8, Encoding::Windows_1252)
+      end
     end
   end
 end
 
 module StringExtensions
-  # Converts a UTF-8 string to Windows-encoding based on the current
-  # Win32api4ruby::Base.unicode setting.
-  def to_s_win32
-    if Win32api4ruby::Base.unicode
-      @@iconv_Utf8ToUtf16 ||= Iconv.new('utf-16le', 'utf-8')
-      @@iconv_Utf8ToUtf16.iconv(self) << DL_PtrDataExtensions::ZeroZeroString
-    else
-      @@iconv_Utf8ToAnsi ||= Iconv.new('windows-1252', 'utf-8')
-      @@iconv_Utf8ToAnsi.iconv(self)
+  if RUBY_VERSION<'1.9'
+    # Converts a UTF-8 string to Windows-encoding based on the current
+    # Win32api4ruby::Base.unicode setting.
+    def to_s_win32
+      if Win32api4ruby::Base.unicode
+        @@iconv_Utf8ToUtf16 ||= Iconv.new('utf-16le', 'utf-8')
+        @@iconv_Utf8ToUtf16.iconv(self) << AbstractMemoryExtensions::ZeroZeroString
+      else
+        @@iconv_Utf8ToAnsi ||= Iconv.new('windows-1252', 'utf-8')
+        @@iconv_Utf8ToAnsi.iconv(self)
+      end
+    end
+  else
+    def to_s_win32
+      if Win32api4ruby::Base.unicode
+        self.encode(Encoding::UTF_16LE, Encoding::UTF_8) << AbstractMemoryExtensions::ZeroZeroString
+      else
+        self.encode(Encoding::Windows_1252, Encoding::UTF_8)
+      end
     end
   end
 end
 
-class ::DL::PtrData
-  include Win32api4ruby::DL_PtrDataExtensions
+class ::FFI::AbstractMemory
+  include Win32api4ruby::AbstractMemoryExtensions
 end
 
 class ::String
@@ -50,17 +69,17 @@ class ::String
 end
 
 class Base
-  
+
   class ApiError < RuntimeError
     def initialize(code, text)
       super(text)
       @code = code
     end
   end
-  
+
   # use ansi-methods by default
   @@unicode = false
-  
+
   def self.unicode=(enabled)
     @@unicode = !!enabled
   end
@@ -68,7 +87,7 @@ class Base
   def self.unicode
     @@unicode
   end
-  
+
   def self.exception_for_0
     delete_errors
     res = yield
@@ -95,7 +114,7 @@ class Base
     end
     return res
   end
-  
+
   def self.exception_for_nil
     delete_errors
     res = yield
@@ -111,15 +130,8 @@ class Base
   end
 
   # --------------------------------------------------------------------------------------------------------------
-  def self.pointer_to_s(ptr)
-    if ptr != 0
-      ptr1 = DL::PtrData.new(ptr)
-      ptr1.to_s
-    end
-  end
-  # --------------------------------------------------------------------------------------------------------------
   def self.get_last_error_text(error_code=nil)
-    message = DL.malloc(1024) #store 1kb space
+    message = FFI::MemoryPointer.new(1024) #store 1kb space
     error_code ||= Kernel.get_last_error()
     Kernel.format_message(0x1000, '', error_code, 0, message, message.size, '')
     message = unicode ? message.to_s_utf8 : message.to_s
@@ -155,20 +167,18 @@ class Base
 
   def self.prepare_PtrData(data=nil, size=nil)
     raise "neither data nor size given" unless data || size
-    
+
     data = case data
       when String
-        dlinitdata = DL.malloc(data.length)
-        dlinitdata[0, dlinitdata.size] = data
-        dlinitdata
-      when DL::PtrData
+        FFI::MemoryPointer.from_string(data)
+      when FFI::AbstractMemory
         data
       when NilClass
       else
-        raise "#{data.class} instead of String or DL::PtrData"
+        raise "#{data.class} instead of String or FFI::AbstractMemory"
     end
-      
-    data || DL.malloc(size)
+
+    data || FFI::MemoryPointer(size)
   end
 end
 end

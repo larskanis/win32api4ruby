@@ -4,55 +4,58 @@ require 'win32api4ruby/base'
 
 module Win32api4ruby
 class Kernel  < Base
-  KERNEL32 = DL.dlopen('kernel32')
+  extend FFI::Library
+  ffi_lib 'kernel32'
+  ffi_convention :stdcall
 
   #the functions that wrap the Win32API calls enforce type checking on arguments
   # (through #check). This is to be consistent with the Win32API which will assume
   # different arguments are calling different functions, throwing wacky errors
   #API WRAPPERS
-  # --------------------------------------------------------------------------------------------------------------
-  GlobalLock = KERNEL32['GlobalLock', 'LL']
+  attach_function :GlobalLock, [ :long ], :long
   def self.global_lock(hMovableMemory)
     check(hMovableMemory,Integer)
     exception_for_0{
-      api_call(GlobalLock, hMovableMemory)
+      GlobalLock(hMovableMemory)
     }
   end
-  GlobalUnlock = KERNEL32['GlobalUnlock', 'LL']
+
+  attach_function :GlobalUnlock, [ :long ], :long
   def self.global_unlock(hMovableMemory)
     check(hMovableMemory,Integer)
-    api_call(GlobalUnlock, hMovableMemory)
+    GlobalUnlock(hMovableMemory)
   end
-  # --------------------------------------------------------------------------------------------------------------
-  GlobalFree = KERNEL32['GlobalFree', 'LL']
+
+  attach_function :GlobalFree, [ :long ], :long
   def self.global_free(hMovableMemory)
     check(hMovableMemory,Integer)
     exception_for_non_0{
-      api_call(GlobalFree, hMovableMemory)
+      GlobalFree(hMovableMemory)
     }
   end
-  # --------------------------------------------------------------------------------------------------------------
-  GetLastError = KERNEL32['GetLastError', 'L']
+
+  attach_function :GetLastError, [], :long
   def self.get_last_error()
-      api_call(GetLastError)
+    GetLastError()
   end
-  # --------------------------------------------------------------------------------------------------------------
-  SetLastError = KERNEL32['SetLastError', 'LL']
+
+  attach_function :SetLastError, [:long], :long
   def self.set_last_error(v)
     check(v, Integer)
-    api_call(SetLastError, v)
+    SetLastError(v)
   end
-  # --------------------------------------------------------------------------------------------------------------
-  FormatMessageW = KERNEL32['FormatMessageW', 'LLPLLpLP']
-  FormatMessageA = KERNEL32['FormatMessageA', 'LLPLLpLP']
+
+  attach_function :FormatMessageW, [:long, :long, :pointer, :long, :long, :pointer, :long, :pointer], :long
+  attach_function :FormatMessageA, [:long, :long, :pointer, :long, :long, :pointer, :long, :pointer], :long
   def self.format_message(dwFlags, lpSource, dwMessageID, dwLanguageID, lpBuffer, nSize, arguments)
     check(dwFlags,Integer);
     check(lpSource,String);
     check(dwMessageID,Integer)
-    check(dwLanguageID,Integer); check(lpBuffer,DL::PtrData);
+    check(dwLanguageID,Integer); check(lpBuffer,FFI::AbstractMemory);
     check(nSize,Integer);
     check(arguments,String)
-    api_call(unicode ? FormatMessageW : FormatMessageA, dwFlags, lpSource, dwMessageID, dwLanguageID, lpBuffer, nSize, arguments)
+    args = dwFlags, lpSource, dwMessageID, dwLanguageID, lpBuffer, nSize, arguments
+    unicode ? FormatMessageW(*args) : FormatMessageA(*args)
   end
   # --------------------------------------------------------------------------------------------------------------
   def self.with_global_lock(handle)
