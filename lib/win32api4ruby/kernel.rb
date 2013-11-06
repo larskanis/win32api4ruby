@@ -31,9 +31,8 @@ class Kernel  < Base
     }
   end
 
-  attach_function :GetLastError, [], :long
   def self.get_last_error()
-    GetLastError()
+    FFI.errno
   end
 
   attach_function :SetLastError, [:long], :long
