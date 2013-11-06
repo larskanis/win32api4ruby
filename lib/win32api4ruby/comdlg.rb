@@ -4,8 +4,10 @@ require 'win32api4ruby/base'
 
 module Win32api4ruby
 class Comdlg < Base
-  COMDLG32 = DL.dlopen('comdlg32')
-  
+  extend FFI::Library
+  ffi_lib 'comdlg32'
+  ffi_convention :stdcall
+
   ##
   ##  Flags for PrintDlg and PrintDlgEx.
   ##
@@ -34,117 +36,144 @@ class Comdlg < Base
   PD_HIDEPRINTTOFILE = 0x00100000
   PD_NONETWORKBUTTON = 0x00200000
 
-  
+
   #the functions that wrap the Win32API calls enforce type checking on arguments
   # (through #check). This is to be consistent with the Win32API which will assume
   # different arguments are calling different functions, throwing wacky errors
   #API WRAPPERS
   # --------------------------------------------------------------------------------------------------------------
-  PrintDlgW = COMDLG32['PrintDlgW', 'Lp']
-  PrintDlgA = COMDLG32['PrintDlgA', 'Lp']
+  attach_function :PrintDlgW, [ :pointer ], :long
+  attach_function :PrintDlgA, [ :pointer ], :long
   def self.print_dlg(pPrintDlg)
-    check(pPrintDlg, DL::PtrData)
+    check(pPrintDlg, FFI::AbstractMemory)
     exception_for_0{
-      api_call(unicode ? PrintDlgW : PrintDlgA, pPrintDlg)
+      unicode ? PrintDlgW(pPrintDlg) : PrintDlgA(pPrintDlg)
     }
   end
 
-  PrintDlgExW = COMDLG32['PrintDlgExW', 'Lp']
-  PrintDlgExA = COMDLG32['PrintDlgExA', 'Lp']
+  attach_function :PrintDlgExW, [ :pointer ], :long
+  attach_function :PrintDlgExA, [ :pointer ], :long
   def self.print_dlg_ex(pPrintDlgEx)
     exception_for_com_error{
-      api_call(unicode ? PrintDlgExW : PrintDlgExA, pPrintDlgEx)
-    }
-  end
-  
-  PageSetupDlgW = COMDLG32['PageSetupDlgW', 'Ip']
-  PageSetupDlgA = COMDLG32['PageSetupDlgA', 'Ip']
-  def self.print_setup_dlg(pPageSetupDlg)
-    exception_for_0{
-      api_call(unicode ? PageSetupDlgW : PageSetupDlgA, pPageSetupDlg)
+      unicode ? PrintDlgExW(pPrintDlgEx) : PrintDlgExA(pPrintDlgEx)
     }
   end
 
-  PRINTDLG_types = "L"*2 + "L"*2 + "L"*2 + "H"*5 + "L"*8
-  def self.create_PRINTDLG(data=nil, size=nil)
-    data = prepare_PtrData(data, size || DL.sizeof(PRINTDLG_types))
-    data.struct!(PRINTDLG_types, 
-        :lStructSize,
-        :hwndOwner,
-        :hDevMode,
-        :hDevNames,
-        :hDC,
-        :Flags,
-        :nFromPage,
-        :nToPage,
-        :nMinPage,
-        :nMaxPage,
-        :nCopies,
-        :hInstance,
-        :lCustData,
-        :lpfnPrintHook,
-        :lpfnSetupHook,
-        :lpPrintTemplateName,
-        :lpSetupTemplateName,
-        :hPrintTemplate,
-        :hSetupTemplate)
-    #~ pdlg[:lStructSize] = DL.sizeof(PRINTDLG_types)
+  attach_function :PageSetupDlgW, [ :pointer ], :int
+  attach_function :PageSetupDlgA, [ :pointer ], :int
+  def self.print_setup_dlg(pPageSetupDlg)
+    exception_for_0{
+      unicode ? PageSetupDlgW(pPageSetupDlg) : PageSetupDlgA(pPageSetupDlg)
+    }
+  end
+
+  class PRINTDLG < FFI::Struct
+    layout :lStructSize, :uint32,
+        :hwndOwner, :uint32,
+        :hDevMode, :uint32,
+        :hDevNames, :uint32,
+        :hDC, :uint32,
+        :Flags, :uint32,
+        :nFromPage, :uint16,
+        :nToPage, :uint16,
+        :nMinPage, :uint16,
+        :nMaxPage, :uint16,
+        :nCopies, :uint16,
+        :hInstance, :uint32,
+        :lCustData, :pointer,
+        :lpfnPrintHook, :pointer,
+        :lpfnSetupHook, :pointer,
+        :lpPrintTemplateName, :pointer,
+        :lpSetupTemplateName, :pointer,
+        :hPrintTemplate, :uint32,
+        :hSetupTemplate, :uint32
+  end
+
+  def self.create_PRINTDLG(ptrdata=nil, size=nil)
+    data = PRINTDLG.new(ptrdata || (size && FFI::MemoryPointer.new(size)))
     data[:lStructSize] = 66
     return data
   end
 
-  PAGESETUPDLG_types = "L"*2 + "l"*2 + "L" + "L"*2 + "L"*4*2 + "L"*4 + "p" + "L"
-  def self.create_PAGESETUPDLG(data=nil, size=nil)
-    data = prepare_PtrData(data, size || DL.sizeof(PAGESETUPDLG_types))
-    data.struct!(PAGESETUPDLG_types, 
-      :lStructSize,
-      :hwndOwner,
-      :hDevMode,
-      :hDevNames,
-      :Flags,
-      :ptPaperSizeX, :ptPaperSizeY,
-      :rtMinMarginL,:rtMinMarginT,:rtMinMarginR,:rtMinMarginB,
-      :rtMarginL,:rtMarginT,:rtMarginR,:rtMarginB,
-      :hInstance,
-      :lCustData,
-      :lpfnPageSetupHook,
-      :lpfnPagePaintHook,
-      :lpPageSetupTemplateName,
-      :hPageSetupTemplate
-    )
-    data[:lStructSize] = DL.sizeof(PAGESETUPDLG_types)
+  class PAGESETUPDLG < FFI::Struct
+    layout  :lStructSize, :uint32,
+      :hwndOwner, :uint32,
+      :hDevMode, :uint32,
+      :hDevNames, :uint32,
+      :Flags, :uint32,
+
+      :ptPaperSizeX, :long,
+      :ptPaperSizeY, :long,
+
+      :rtMinMarginL, :long,
+      :rtMinMarginT, :long,
+      :rtMinMarginR, :long,
+      :rtMinMarginB, :long,
+
+      :rtMarginL, :long,
+      :rtMarginT, :long,
+      :rtMarginR, :long,
+      :rtMarginB, :long,
+
+      :hInstance, :uint32,
+      :lCustData, :pointer,
+      :lpfnPageSetupHook, :pointer,
+      :lpfnPagePaintHook, :pointer,
+      :lpPageSetupTemplateName, :pointer,
+      :hPageSetupTemplate, :uint32
+  end
+
+  def self.create_PAGESETUPDLG(ptrdata=nil, size=nil)
+    data = PAGESETUPDLG.new(ptrdata || (size && FFI::MemoryPointer.new(size)))
+    data[:lStructSize] = PAGESETUPDLG.size
     return data
   end
-  
-  PRINTDLGEX_types = "L"*5 + "L"*5 + "P" + "L"*3 + "L" + "S" + "P" + "L" + "P" +"L"*2
-  def self.create_PRINTDLGEX(data=nil, size=nil)
-    data = prepare_PtrData(data, size || DL.sizeof(PRINTDLGEX_types))
-    data.struct!(PRINTDLGEX_types, 
-      :lStructSize,
-      :hwndOwner,
-      :hDevMode,
-      :hDevNames,
-      :hDC,
-      :Flags,
-      :Flags2,
-      :ExclusionFlags,
-      :nPageRanges,
-      :nMaxPageRanges,
-      :lpPageRanges,
-      :nMinPage,
-      :nMaxPage,
-      :nCopies,
-      :hInstance,
-      :lpPrintTemplateName,
-      :lpCallback,
-      :nPropertyPages,
-      :plphPropertyPages,
-      :nStartPage,
-      :dwResultAction
-    )
-    data[:lStructSize] = DL.sizeof(PRINTDLGEX_types)
+
+  class PRINTDLGEX < FFI::Struct
+    layout :lStructSize, :uint32,
+      :hwndOwner, :uint32,
+      :hDevMode, :uint32,
+      :hDevNames, :uint32,
+      :hDC, :uint32,
+      :Flags, :uint32,
+      :Flags2, :uint32,
+      :ExclusionFlags, :uint32,
+      :nPageRanges, :uint32,
+      :nMaxPageRanges, :uint32,
+      :lpPageRanges, :pointer,
+      :nMinPage, :uint32,
+      :nMaxPage, :uint32,
+      :nCopies, :uint32,
+      :hInstance, :uint32,
+      :lpPrintTemplateName, :pointer,
+      :lpCallback, :pointer,
+      :nPropertyPages, :uint32,
+      :plphPropertyPages, :pointer,
+      :nStartPage, :uint32,
+      :dwResultAction, :uint32
+  end
+  def self.create_PRINTDLGEX(ptrdata=nil, size=nil)
+    data = PRINTDLGEX.new(ptrdata || (size && FFI::MemoryPointer.new(size)))
+    data[:lStructSize] = PRINTDLGEX.size
     return data
   end
-    
+
+  class DEVNAMES < FFI::Struct
+    # struct tagDEVNAMES {
+    #   WORD wDriverOffset;
+    #   WORD wDeviceOffset;
+    #   WORD wOutputOffset;
+    #   WORD wDefault;
+    # } DEVNAMES
+    layout :wDriverOffset, :uint16,
+        :wDeviceOffset, :uint16,
+        :wOutputOffset, :uint16,
+        :wDefault, :uint16
+  end
+  def self.create_DEVNAMES(ptrdata=nil, size=nil)
+    DEVNAMES.new(ptrdata || (size && FFI::MemoryPointer.new(size)))
+  end
+
+
 end
 end

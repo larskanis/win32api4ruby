@@ -4,6 +4,10 @@ require 'win32api4ruby/base'
 
 module Win32api4ruby
 class Winspool < Base
+  extend FFI::Library
+  ffi_lib 'winspool.drv'
+  ffi_convention :stdcall
+
   PRINTER_ENUM_DEFAULT = 0x00000001
   PRINTER_ENUM_LOCAL = 0x00000002
   PRINTER_ENUM_CONNECTIONS = 0x00000004
@@ -28,39 +32,37 @@ class Winspool < Base
 
   IDOK = 1
   IDCANCEL = 2
-  
-  WINSPOOL = DL.dlopen('winspool.drv')
-  
-  EnumPrintersA = WINSPOOL['EnumPrintersA', 'LLPLpLpp']
-  EnumPrintersW = WINSPOOL['EnumPrintersW', 'LLPLpLpp']
+
+  attach_function :EnumPrintersA, [ :long, :pointer, :long, :pointer, :long, :pointer, :pointer ], :long
+  attach_function :EnumPrintersW, [ :long, :pointer, :long, :pointer, :long, :pointer, :pointer ], :long
   def self.enum_printers(flags, name, level)
-    pcbNeeded = DL.malloc(DL.sizeof('L'))
-    pcbNeeded.struct!('L', :size)
-    pcReturned = DL.malloc(DL.sizeof('L'))
-    pcReturned.struct!('L', :size)
-    pcbNeeded[:size] = 0
-    
+    pcbNeeded = FFI::MemoryPointer.new(:long)
+    pcReturned = FFI::MemoryPointer.new(:long)
+    pcbNeeded.write_long 0
+
     # erst einmal ermitteln, wieviel Speicher gebraucht wird
-    api_call(unicode ? EnumPrintersW : EnumPrintersA, flags, name, level, nil, 0, pcbNeeded, pcReturned)
-    
+    args = flags, name, level, nil, 0, pcbNeeded, pcReturned
+    unicode ? EnumPrintersW(*args) : EnumPrintersA(*args)
+
     # und dann die Infos holen
-    cbBuf = pcbNeeded[:size]
+    cbBuf = pcbNeeded.read_long
 #     puts "pcbNeeded: #{cbBuf}"
-    pPrinterEnum = DL.malloc(cbBuf)
+    pPrinterEnum = FFI::MemoryPointer.new(cbBuf)
     exception_for_0{
-      api_call(unicode ? EnumPrintersW : EnumPrintersA, flags, name, level, pPrinterEnum, cbBuf, pcbNeeded, pcReturned)
+      args = flags, name, level, pPrinterEnum, cbBuf, pcbNeeded, pcReturned
+      unicode ? EnumPrintersW(*args) : EnumPrintersA(*args)
     }
-    
+
     #~ p "Laenge des übergebenen Puffers: #{cbBuf}"
-    needed = pcbNeeded[:size]
-    returned = pcReturned[:size]
+    needed = pcbNeeded.read_long
+    returned = pcReturned.read_long
 #     puts "benoetigte Bytes: #{needed}"
 #     puts "zurueckgegebene Drucker: #{returned}"
 
     printers = (0...returned).map{|idx|
       case level
       when PRINTER_INFO_4
-        create_PRINTER_INFO_4(pPrinterEnum + idx*DL.sizeof(PRINTER_INFO_4_types))
+        create_PRINTER_INFO_4(nil, pPrinterEnum + idx*PRINTER_INFO_4.size)
       else
         raise "unsupported printer info level #{level.inspect}"
       end
@@ -68,21 +70,20 @@ class Winspool < Base
     return printers
   end
 
-  PRINTER_INFO_4_types = 'PPL'
-  
-  #   typedef self.struct _PRINTER_INFO_4 {
-  #     LPTSTR pPrinterName;
-  #     LPTSTR pServerName;
-  #     DWORD  Attributes;
-  #   }PRINTER_INFO_4, *PPRINTER_INFO_4;
-  #
-  def self.create_PRINTER_INFO_4(mem)
-    mem ||= DL.malloc(DL.sizeof(PRINTER_INFO_4_types))
-    mem.struct!(PRINTER_INFO_4_types,
-      :pPrinterName,
-      :pServerName,
-      :Attributes)
-    return mem
+  class PRINTER_INFO_4 < FFI::Struct
+    #   typedef self.struct _PRINTER_INFO_4 {
+    #     LPTSTR pPrinterName;
+    #     LPTSTR pServerName;
+    #     DWORD  Attributes;
+    #   }PRINTER_INFO_4, *PPRINTER_INFO_4;
+    #
+    layout :pPrinterName, :pointer,
+      :pServerName, :pointer,
+      :Attributes, :uint32
+  end
+
+  def self.create_PRINTER_INFO_4(ptrdata=nil, size=nil)
+    PRINTER_INFO_4.new(ptrdata || (size && FFI::MemoryPointer.new(size)))
   end
 
 
@@ -94,19 +95,21 @@ class Winspool < Base
   #   __in   PDEVMODE pDevModeInput,
   #   __in   DWORD fMode
   # );
-  # 
-  DocumentPropertiesW = WINSPOOL['DocumentPropertiesW', 'LLLPpPL']
-  DocumentPropertiesA = WINSPOOL['DocumentPropertiesA', 'LLLPpPL']
+  #
+  attach_function :DocumentPropertiesW, [ :long, :long, :pointer, :pointer, :pointer, :long ], :long
+  attach_function :DocumentPropertiesA, [ :long, :long, :pointer, :pointer, :pointer, :long ], :long
   def self.document_properties(hWnd, hPrinter, deviceName, devModeInput, mode)
     # erst einmal ermitteln, wieviel Speicher gebraucht wird
     bufsize = exception_for_negative{
-      api_call(unicode ? DocumentPropertiesW : DocumentPropertiesA, hWnd, hPrinter, deviceName, nil, devModeInput, 0)
+      args = hWnd, hPrinter, deviceName, nil, devModeInput, 0
+      unicode ? DocumentPropertiesW(*args) : DocumentPropertiesA(*args)
     }
-    
+
     # und dann die Infos holen
     pDevModeOutput = create_DEVMOD(nil, bufsize)
     res = exception_for_negative{
-      api_call(unicode ? DocumentPropertiesW : DocumentPropertiesA, hWnd, hPrinter, deviceName, pDevModeOutput, devModeInput, mode)
+      args = hWnd, hPrinter, deviceName, pDevModeOutput, devModeInput, mode
+      unicode ? DocumentPropertiesW(*args) : DocumentPropertiesA(*args)
     }
     if res==IDOK
       return pDevModeOutput
@@ -114,83 +117,86 @@ class Winspool < Base
       return nil
     end
   end
-  
-  
-  OpenPrinterW = WINSPOOL['OpenPrinterW', 'LPpP']
-  OpenPrinterA = WINSPOOL['OpenPrinterA', 'LPpP']
+
+
+  attach_function :OpenPrinterW, [ :pointer, :pointer, :pointer ], :long
+  attach_function :OpenPrinterA, [ :pointer, :pointer, :pointer ], :long
   # BOOL OpenPrinter(
   #   __in   LPTSTR pPrinterName,
   #   __out  LPHANDLE phPrinter,
   #   __in   LPPRINTER_DEFAULTS pDefault
-  # );      
+  # );
   def self.open_printer(pPrinterName, phPrinter, pDefault)
     check(pPrinterName,String)
     #phPrinter is the PRINTER_DEFAULTS structure.. 0 for default
     # since we want to send through a zero for default, can't enforce string check...
     exception_for_0{
-      api_call(unicode ? OpenPrinterW : OpenPrinterA, pPrinterName, phPrinter, pDefault)
+      args = pPrinterName, phPrinter, pDefault
+      unicode ? OpenPrinterW(*args) : OpenPrinterA(*args)
     }
   end
   #-----------------------------------------------------------------------------------------------------------------
-  
-  ClosePrinter = WINSPOOL['ClosePrinter', 'LL']
+
+  attach_function :ClosePrinter, [ :long ], :long
   def self.close_printer(hPrinter)
     check(hPrinter,Integer)
     exception_for_0{
-      api_call(ClosePrinter, hPrinter)
+      ClosePrinter(hPrinter)
     }
   end
   #-----------------------------------------------------------------------------------------------------------------
-  
-  AbortPrinter = WINSPOOL['AbortPrinter', 'LL']
+
+  attach_function :AbortPrinter, [ :long ], :long
   def self.abort_printer(hPrinter)
     check(hPrinter,Integer)
     exception_for_0{
-      api_call(AbortPrinter, hPrinter)
+      AbortPrinter(hPrinter)
     }
   end
   #-----------------------------------------------------------------------------------------------------------------
-  
-  StartDocPrinterA = WINSPOOL['StartDocPrinterA', 'LLLP']
-  StartDocPrinterW = WINSPOOL['StartDocPrinterW', 'LLLP']
+
+  attach_function :StartDocPrinterA, [ :long, :long, :pointer ], :long
+  attach_function :StartDocPrinterW, [ :long, :long, :pointer ], :long
   def self.start_doc_printer(hPrinter, level, pDocInfo)
     check(hPrinter, Integer);
-    check(level, Integer); 
+    check(level, Integer);
 #    check(pDocInfo, String)
     exception_for_0{
-      api_call(unicode ? StartDocPrinterW : StartDocPrinterA, hPrinter, level, pDocInfo)
+      args = hPrinter, level, pDocInfo
+      unicode ? StartDocPrinterW(*args) : StartDocPrinterA(*args)
     }
   end
   #-----------------------------------------------------------------------------------------------------------------
-  
-  EndDocPrinter = WINSPOOL['EndDocPrinter', 'LL']
+
+  attach_function :EndDocPrinter, [ :long ], :long
   def self.end_doc_printer(hPrinter)
     check(hPrinter, Integer)
     exception_for_0{
-      api_call(EndDocPrinter, hPrinter)
+      EndDocPrinter(hPrinter)
     }
   end
   #-----------------------------------------------------------------------------------------------------------------
-  
-  StartPagePrinter = WINSPOOL['StartPagePrinter', 'LL']
+
+  attach_function :StartPagePrinter, [ :long ], :long
   def self.start_page_printer(hPrinter)
     check(hPrinter, Integer)
     exception_for_0{
-      api_call(StartPagePrinter, hPrinter)
+      StartPagePrinter(hPrinter)
     }
   end
   #-----------------------------------------------------------------------------------------------------------------
-  
+
+  attach_function :EndPagePrinter, [ :long ], :long
   EndPagePrinter = WINSPOOL['EndPagePrinter', 'LL']
   def self.end_page_printer(hPrinter)
     check(hPrinter, Integer)
     exception_for_0{
-      api_call(EndPagePrinter, hPrinter)
+      EndPagePrinter(hPrinter)
     }
   end
   #-----------------------------------------------------------------------------------------------------------------
-  
-  GetPrinter = WINSPOOL['GetPrinter', 'LLLpLp']
+
+  attach_function :GetPrinter, [ :long, :long, :pointer, :long, :pointer ], :long
   def self.get_printer(hPrinter, level, pPrinter, cbBuf, pcbNeeded)
     #~ BOOL GetPrinter(
       #~ __in   HANDLE hPrinter,
@@ -200,13 +206,13 @@ class Winspool < Base
       #~ __out  LPDWORD pcbNeeded
     #~ );
     #~ exception_for_0{
-      api_call(GetPrinter, hPrinter, level, pPrinter, cbBuf, pcbNeeded)
+      GetPrinter(hPrinter, level, pPrinter, cbBuf, pcbNeeded)
     #~ }
   end
 
 #-----------------------------------------------------------------------------------------------------------------
 
-	WritePrinter = WINSPOOL['WritePrinter', 'IIPIp']
+  attach_function :WritePrinter, [ :long, :pointer, :uint32, :pointer ], :long
 	def self.write_printer(hPrinter, pBuf)
 	#~ BOOL WritePrinter(
   #~ __in   HANDLE hPrinter,
@@ -214,68 +220,107 @@ class Winspool < Base
   #~ __in   DWORD cbBuf,
   #~ __out  LPDWORD pcWritten
 #~ );
-		pcWritten = DL.malloc(4)
-		pcWritten.struct!('L', :len)
+		pcWritten = FFI::MemoryPointer.new :uint32
     exception_for_0{
-      api_call(WritePrinter, hPrinter, pBuf, pBuf.length, pcWritten)
+      WritePrinter(hPrinter, pBuf, pBuf.length, pcWritten)
 		}
-		pcWritten[:len]
+		pcWritten.read_uint32
   end
 
+  class DOC_INFO_1W < FFI::Struct
+    layout :pDocName, :pointer,
+      :pOutputFile, :pointer,
+      :pDatatype, :pointer
+  end
 
-	DOC_INFO_1W_types = 'PPP'
-	DOC_INFO_1A_types = 'PPP'
+  class DOC_INFO_1A < FFI::Struct
+    layout :pDocName, :pointer,
+      :pOutputFile, :pointer,
+      :pDatatype, :pointer
+  end
+
 	def self.create_DOC_INFO_1(ptrdata=nil, size=nil)
-		ptrdata = prepare_PtrData(ptrdata, size || DL.sizeof(unicode ? DOC_INFO_1W_types : DOC_INFO_1A_types))
-		ptrdata.struct!(unicode ? DOC_INFO_1W_types : DOC_INFO_1A_types,
-			:pDocName,
-			:pOutputFile,
-			:pDatatype)
-		return ptrdata
+    (unicode ? DOC_INFO_1W : DOC_INFO_1A).new(ptrdata || (size && FFI::MemoryPointer.new(size)))
 	end
 
 #-----------------------------------------------------------------------------------------------------------------
 
-  DEVMODW_types = 'H32HHHHI' + 'H'*8 + 'H'*5 + 'H32H' + 'I'*13
-  DEVMODA_types = 'C32HHHHI' + 'H'*8 + 'H'*5 + 'C32H' + 'I'*13
+  class DEVMODW < FFI::Struct
+    layout :dmDeviceName, [:uint16, 32],
+      :dmSpecVersion, :uint16,
+      :dmDriverVersion, :uint16,
+      :dmSize, :uint16,
+      :dmDriverExtra, :uint16,
+      :dmFields, :uint32,
+          :dmOrientation, :int16,
+          :dmPaperSize, :int16,
+          :dmPaperLength, :int16,
+          :dmPaperWidth, :int16,
+          :dmScale, :int16,
+          :dmCopies, :int16,
+          :dmDefaultSource, :int16,
+          :dmPrintQuality, :int16,
+      :dmColor, :int16,
+      :dmDuplex, :int16,
+      :dmYResolution, :int16,
+      :dmTTOption, :int16,
+      :dmCollate, :int16,
+      :dmFormName, [:uint16, 32],
+      :dmLogPixels, :uint16,
+      :dmBitsPerPel, :uint32,
+      :dmPelsWidth, :uint32,
+      :dmPelsHeight, :uint32,
+        :dmNup, :uint32,
+      :dmDisplayFrequency, :uint32,
+      :dmICMMethod, :uint32,
+      :dmICMIntent, :uint32,
+      :dmMediaType, :uint32,
+      :dmDitherType, :uint32,
+      :dmReserved1, :uint32,
+      :dmReserved2, :uint32,
+      :dmPanningWidth, :uint32,
+      :dmPanningHeight :uint32
+  end
+
+  class DEVMODA < FFI::Struct
+    layout :dmDeviceName, [:uint8, 32],
+      :dmSpecVersion, :uint16,
+      :dmDriverVersion, :uint16,
+      :dmSize, :uint16,
+      :dmDriverExtra, :uint16,
+      :dmFields, :uint32,
+          :dmOrientation, :int16,
+          :dmPaperSize, :int16,
+          :dmPaperLength, :int16,
+          :dmPaperWidth, :int16,
+          :dmScale, :int16,
+          :dmCopies, :int16,
+          :dmDefaultSource, :int16,
+          :dmPrintQuality, :int16,
+      :dmColor, :int16,
+      :dmDuplex, :int16,
+      :dmYResolution, :int16,
+      :dmTTOption, :int16,
+      :dmCollate, :int16,
+      :dmFormName, [:uint8, 32],
+      :dmLogPixels, :uint16,
+      :dmBitsPerPel, :uint32,
+      :dmPelsWidth, :uint32,
+      :dmPelsHeight, :uint32,
+        :dmNup, :uint32,
+      :dmDisplayFrequency, :uint32,
+      :dmICMMethod, :uint32,
+      :dmICMIntent, :uint32,
+      :dmMediaType, :uint32,
+      :dmDitherType, :uint32,
+      :dmReserved1, :uint32,
+      :dmReserved2, :uint32,
+      :dmPanningWidth, :uint32,
+      :dmPanningHeight :uint32
+  end
+
   def self.create_DEVMOD(ptrdata=nil, size=nil)
-    ptrdata = prepare_PtrData(ptrdata, size || DL.sizeof(unicode ? DEVMODW_types : DEVMODA_types))
-    ptrdata.struct!(unicode ? DEVMODW_types : DEVMODA_types, 
-      :dmDeviceName,
-      :dmSpecVersion,
-      :dmDriverVersion,
-      :dmSize,
-      :dmDriverExtra,
-      :dmFields,
-          :dmOrientation,
-          :dmPaperSize,
-          :dmPaperLength,
-          :dmPaperWidth,
-          :dmScale,
-          :dmCopies,
-          :dmDefaultSource,
-          :dmPrintQuality,
-      :dmColor,
-      :dmDuplex,
-      :dmYResolution,
-      :dmTTOption,
-      :dmCollate,
-      :dmFormName,
-      :dmLogPixels,
-      :dmBitsPerPel,
-      :dmPelsWidth,
-      :dmPelsHeight,
-        :dmNup,
-      :dmDisplayFrequency,
-      :dmICMMethod,
-      :dmICMIntent,
-      :dmMediaType,
-      :dmDitherType,
-      :dmReserved1,
-      :dmReserved2,
-      :dmPanningWidth,
-      :dmPanningHeight)
-    return ptrdata
+    (unicode ? DEVMODW : DEVMODA).new(ptrdata || (size && FFI::MemoryPointer.new(size)))
   end
 end
 end

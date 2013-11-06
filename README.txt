@@ -29,7 +29,7 @@ short exsample:
 
 == REQUIREMENTS:
 
-* based on Ruby/DL
+* based on FFI
 
 == INSTALL:
 
