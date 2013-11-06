@@ -36,23 +36,51 @@ class Comdlg < Base
   PD_HIDEPRINTTOFILE = 0x00100000
   PD_NONETWORKBUTTON = 0x00200000
 
+  #~ PRINTDLG_types = "L"*2 + "L"*2 + "L"*2 + "H"*5 + "L"*8
+  class PRINTDLG < FFI::Struct
+    packed unless RUBY_PLATFORM =~ /x64/
+    layout :lStructSize, :uint32,
+        :hwndOwner, :handle,
+        :hDevMode, :handle,
+        :hDevNames, :handle,
+        :hDC, :handle,
+        :Flags, :uint32,
+        :nFromPage, :uint16,
+        :nToPage, :uint16,
+        :nMinPage, :uint16,
+        :nMaxPage, :uint16,
+        :nCopies, :uint16,
+        :hInstance, :handle,
+        :lCustData, :pointer,
+        :lpfnPrintHook, :pointer,
+        :lpfnSetupHook, :pointer,
+        :lpPrintTemplateName, :pointer,
+        :lpSetupTemplateName, :pointer,
+        :hPrintTemplate, :handle,
+        :hSetupTemplate, :handle
+  end
+
+  def self.create_PRINTDLG(ptrdata=nil, size=nil)
+    data = PRINTDLG.new(ptrdata || (size && FFI::MemoryPointer.new(size)))
+    data[:lStructSize] = PRINTDLG.size
+    return data
+  end
 
   #the functions that wrap the Win32API calls enforce type checking on arguments
   # (through #check). This is to be consistent with the Win32API which will assume
   # different arguments are calling different functions, throwing wacky errors
   #API WRAPPERS
   # --------------------------------------------------------------------------------------------------------------
-  attach_function :PrintDlgW, [ :pointer ], :long
-  attach_function :PrintDlgA, [ :pointer ], :long
+  attach_function :PrintDlgW, [ PRINTDLG.by_ref ], :int
+  attach_function :PrintDlgA, [ PRINTDLG.by_ref ], :int
   def self.print_dlg(pPrintDlg)
-    check(pPrintDlg, FFI::AbstractMemory)
     exception_for_0{
       unicode ? PrintDlgW(pPrintDlg) : PrintDlgA(pPrintDlg)
     }
   end
 
-  attach_function :PrintDlgExW, [ :pointer ], :long
-  attach_function :PrintDlgExA, [ :pointer ], :long
+  attach_function :PrintDlgExW, [ :pointer ], :handle
+  attach_function :PrintDlgExA, [ :pointer ], :handle
   def self.print_dlg_ex(pPrintDlgEx)
     exception_for_com_error{
       unicode ? PrintDlgExW(pPrintDlgEx) : PrintDlgExA(pPrintDlgEx)
@@ -67,39 +95,11 @@ class Comdlg < Base
     }
   end
 
-  class PRINTDLG < FFI::Struct
-    layout :lStructSize, :uint32,
-        :hwndOwner, :uint32,
-        :hDevMode, :uint32,
-        :hDevNames, :uint32,
-        :hDC, :uint32,
-        :Flags, :uint32,
-        :nFromPage, :uint16,
-        :nToPage, :uint16,
-        :nMinPage, :uint16,
-        :nMaxPage, :uint16,
-        :nCopies, :uint16,
-        :hInstance, :uint32,
-        :lCustData, :pointer,
-        :lpfnPrintHook, :pointer,
-        :lpfnSetupHook, :pointer,
-        :lpPrintTemplateName, :pointer,
-        :lpSetupTemplateName, :pointer,
-        :hPrintTemplate, :uint32,
-        :hSetupTemplate, :uint32
-  end
-
-  def self.create_PRINTDLG(ptrdata=nil, size=nil)
-    data = PRINTDLG.new(ptrdata || (size && FFI::MemoryPointer.new(size)))
-    data[:lStructSize] = 66
-    return data
-  end
-
   class PAGESETUPDLG < FFI::Struct
     layout  :lStructSize, :uint32,
-      :hwndOwner, :uint32,
-      :hDevMode, :uint32,
-      :hDevNames, :uint32,
+      :hwndOwner, :handle,
+      :hDevMode, :handle,
+      :hDevNames, :handle,
       :Flags, :uint32,
 
       :ptPaperSizeX, :long,
@@ -115,12 +115,12 @@ class Comdlg < Base
       :rtMarginR, :long,
       :rtMarginB, :long,
 
-      :hInstance, :uint32,
+      :hInstance, :handle,
       :lCustData, :pointer,
       :lpfnPageSetupHook, :pointer,
       :lpfnPagePaintHook, :pointer,
       :lpPageSetupTemplateName, :pointer,
-      :hPageSetupTemplate, :uint32
+      :hPageSetupTemplate, :handle
   end
 
   def self.create_PAGESETUPDLG(ptrdata=nil, size=nil)
@@ -131,10 +131,10 @@ class Comdlg < Base
 
   class PRINTDLGEX < FFI::Struct
     layout :lStructSize, :uint32,
-      :hwndOwner, :uint32,
-      :hDevMode, :uint32,
-      :hDevNames, :uint32,
-      :hDC, :uint32,
+      :hwndOwner, :handle,
+      :hDevMode, :handle,
+      :hDevNames, :handle,
+      :hDC, :handle,
       :Flags, :uint32,
       :Flags2, :uint32,
       :ExclusionFlags, :uint32,
@@ -144,7 +144,7 @@ class Comdlg < Base
       :nMinPage, :uint32,
       :nMaxPage, :uint32,
       :nCopies, :uint32,
-      :hInstance, :uint32,
+      :hInstance, :handle,
       :lpPrintTemplateName, :pointer,
       :lpCallback, :pointer,
       :nPropertyPages, :uint32,

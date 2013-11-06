@@ -64,7 +64,7 @@ class Gdi < Base
   # different arguments are calling different functions, throwing wacky errors
   #API WRAPPERS
 
-  attach_function :CreateCompatibleBitmap, [ :long, :int, :int ], :int
+  attach_function :CreateCompatibleBitmap, [ :handle, :int, :int ], :handle
   def self.create_compatible_bitmap(hdc, nWidth, nHeight)
         #~ HBITMAP CreateCompatibleBitmap(
           #~ __in  HDC hdc,
@@ -76,7 +76,7 @@ class Gdi < Base
     }
   end
 
-  attach_function :CreateBitmap, [ :int, :int, :uint, :uint, :pointer ], :long
+  attach_function :CreateBitmap, [ :int, :int, :uint, :uint, :pointer ], :handle
   def self.create_bitmap(nWidth, nHeight, cPlanes, cBitsPerPel, lpvBits)
       #~ HBITMAP CreateBitmap(
         #~ __in  int nWidth,
@@ -90,7 +90,7 @@ class Gdi < Base
     }
   end
 
-  attach_function :SetDIBits, [ :int, :int, :uint, :uint, :pointer, :pointer, :uint ], :long
+  attach_function :SetDIBits, [ :handle, :handle, :uint, :uint, :pointer, :pointer, :uint ], :int
   def self.set_dibits(hdc, hbmp, uStartScan, cScanLines, lpvBits, lpbmi, fuColorUse)
       #~ int SetDIBits(
         #~ __in  HDC hdc,
@@ -106,7 +106,7 @@ class Gdi < Base
     }
   end
 
-  attach_function :SetDIBitsToDevice, [ :long, :int, :int, :uint, :uint, :int, :int, :uint, :uint, :pointer, :pointer, :uint ], :long
+  attach_function :SetDIBitsToDevice, [ :handle, :int, :int, :uint, :uint, :int, :int, :uint, :uint, :pointer, :pointer, :uint ], :int
   def self.set_dibits_to_device(hdc, xDest, yDest, dwWidth, dwHeight, xSrc, ySrc, uStartScan, cScanLines, lpvBits, lpbmi, fuColorUse)
     #~ int SetDIBitsToDevice(
       #~ __in  HDC hdc,
@@ -128,7 +128,7 @@ class Gdi < Base
   end
 
 
-  attach_function :BitBlt, [ :long, :int, :int, :int, :int, :long, :int, :int, :uint ], :long
+  attach_function :BitBlt, [ :handle, :int, :int, :int, :int, :handle, :int, :int, :uint32 ], :int
   def self.bit_blt(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc, dwRop)
       #~ BOOL BitBlt(
         #~ __in  HDC hdcDest,
@@ -147,8 +147,8 @@ class Gdi < Base
   end
 
 
-  attach_function :TextOutW, [ :long, :int, :int, :pointer, :int ], :long
-  attach_function :TextOutA, [ :long, :int, :int, :pointer, :int ], :long
+  attach_function :TextOutW, [ :handle, :int, :int, :pointer, :int ], :int
+  attach_function :TextOutA, [ :handle, :int, :int, :pointer, :int ], :int
   def self.text_out(hdc, nXStart, nYStart, lpString, cbString)
       #~ BOOL TextOut(
         #~ __in  HDC hdc,
@@ -164,34 +164,32 @@ class Gdi < Base
   end
 
 
-  attach_function :SelectObject, [ :long, :long ], :long
+  attach_function :SelectObject, [ :handle, :handle ], :handle
   def self.select_object(hdc, hgdiobj)
       #~ HGDIOBJ SelectObject(
         #~ HDC hdc,
         #~ HGDIOBJ hgdiobj
       #~ );
-    #~ check(hMovableMemory,Integer)
     exception_for_0{
       SelectObject(hdc, hgdiobj)
     }
   end
 
 
-  attach_function :SelectObject, [ :long, :int, :pointer ], :long
+  attach_function :SelectObject, [ :handle, :int, :pointer ], :int
   def self.get_object(hgdiobj, cbBuffer, lpvObject)
       #~ int GetObject(
         #~ __in   HGDIOBJ hgdiobj,
         #~ __in   int cbBuffer,
         #~ __out  LPVOID lpvObject
       #~ );
-    #~ check(hMovableMemory,Integer)
     exception_for_0{
       GetObject(hgdiobj, cbBuffer, lpvObject)
     }
   end
 
 
-  attach_function :DeleteDC, [ :long ], :long
+  attach_function :DeleteDC, [ :handle ], :int
   # nur bei CreateDC verwenden
   def self.delete_dc(hDC)
       #~ BOOL DeleteDC(
@@ -204,7 +202,7 @@ class Gdi < Base
   end
 
 
-  attach_function :DeleteObject, [ :long ], :long
+  attach_function :DeleteObject, [ :handle ], :int
   # nur bei CreateDC verwenden
   def self.delete_object(hDC)
       #~ BOOL DeleteDC(
@@ -217,20 +215,19 @@ class Gdi < Base
   end
 
 
-  attach_function :CreateCompatibleDC, [ :long ], :long
+  attach_function :CreateCompatibleDC, [ :handle ], :handle
   def self.create_compatible_dc(hdc)
       #~ HDC CreateCompatibleDC(
         #~ __in  HDC hdc
       #~ );
-    #~ check(hMovableMemory,Integer)
     exception_for_0{
       CreateCompatibleDC(hdc)
     }
   end
 
 
-  attach_function :CreateDCW, [ :pointer, :pointer, :pointer, :pointer ], :long
-  attach_function :CreateDCA, [ :pointer, :pointer, :pointer, :pointer ], :long
+  attach_function :CreateDCW, [ :pointer, :pointer, :pointer, :pointer ], :handle
+  attach_function :CreateDCA, [ :pointer, :pointer, :pointer, :pointer ], :handle
   def self.create_dc(lpszDriver, lpszDevice, lpszOutput, lpInitData)
        #~ HDC CreateDC(
             #~ LPCTSTR lpszDriver,
@@ -247,22 +244,20 @@ class Gdi < Base
   end
 
 
-  attach_function :AbortDoc, [ :long ], :long
+  attach_function :AbortDoc, [ :handle ], :int
   def self.abort_doc(hPrinter)
       #~ int AbortDoc(
         #~ __in  HDC hdc
       #~ );
-    check(hPrinter, Integer)
     exception_for_0{
       AbortDoc(hPrinter)
     }
   end
 
 
-  attach_function :StartDocW, [ :long, :pointer ], :long
-  attach_function :StartDocA, [ :long, :pointer ], :long
+  attach_function :StartDocW, [ :handle, :pointer ], :int
+  attach_function :StartDocA, [ :handle, :pointer ], :int
   def self.start_doc(hPrinter, pDocInfo)
-    check(hPrinter, Integer)
     exception_for_0{
       args = hPrinter, pDocInfo
       unicode ? StartDocW(*args) : StartDocA(*args)
@@ -270,38 +265,35 @@ class Gdi < Base
   end
 
 
-  attach_function :EndDoc, [ :long ], :long
+  attach_function :EndDoc, [ :handle ], :int
   def self.end_doc(hPrinter)
-    check(hPrinter, Integer)
     exception_for_0{
       EndDoc(hPrinter)
     }
   end
 
 
-  attach_function :StartPage, [ :long ], :long
+  attach_function :StartPage, [ :handle ], :int
   def self.start_page(hPrinter)
-    check(hPrinter, Integer)
     exception_for_0{
       StartPage(hPrinter)
     }
   end
 
 
-  attach_function :EndPage, [ :long ], :long
+  attach_function :EndPage, [ :handle ], :int
   def self.end_page(hPrinter)
       #~ int EndPage(
         #~ __in  HDC hdc
       #~ );
-    check(hPrinter, Integer)
     exception_for_0{
       EndPage(hPrinter)
     }
   end
 
 
-  attach_function :CreateFontW, [ :int, :int, :int, :int, :int, :ulong, :ulong, :ulong, :ulong, :ulong, :ulong, :ulong, :ulong, :pointer ], :long
-  attach_function :CreateFontA, [ :int, :int, :int, :int, :int, :ulong, :ulong, :ulong, :ulong, :ulong, :ulong, :ulong, :ulong, :pointer ], :long
+  attach_function :CreateFontW, [ :int, :int, :int, :int, :int, :ulong, :ulong, :ulong, :ulong, :ulong, :ulong, :ulong, :ulong, :pointer ], :handle
+  attach_function :CreateFontA, [ :int, :int, :int, :int, :int, :ulong, :ulong, :ulong, :ulong, :ulong, :ulong, :ulong, :ulong, :pointer ], :handle
   def self.create_font(nHeight, nWidth, nEscapement, nOrientation, fnWeight, fdwItalic, fdwUnderline, fdwStrikeOut, fdwCharSet, fdwOutputPrecision, fdwClipPrecision, fdwQuality, fdwPitchAndFamily, lpszFace)
       #~ HFONT CreateFont(
         #~ __in  int nHeight,
@@ -319,14 +311,13 @@ class Gdi < Base
         #~ __in  DWORD fdwPitchAndFamily,
         #~ __in  LPCTSTR lpszFace
       #~ );
-    #~ check(hPrinter, Integer)
     exception_for_0{
       args = nHeight, nWidth, nEscapement, nOrientation, fnWeight, fdwItalic, fdwUnderline, fdwStrikeOut, fdwCharSet, fdwOutputPrecision, fdwClipPrecision, fdwQuality, fdwPitchAndFamily, lpszFace
       unicode ? CreateFontW(*args) : CreateFontA(*args)
     }
   end
 
-  attach_function :Escape, [ :ulong, :int, :int, :pointer, :pointer ], :int
+  attach_function :Escape, [ :handle, :int, :int, :pointer, :pointer ], :int
   def self.escape(hdc, nEscape, lpvInData, lpvOutData)
 				#~ int Escape(
 				#~ __in   HDC hdc,

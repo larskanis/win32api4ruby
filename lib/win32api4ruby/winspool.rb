@@ -33,8 +33,8 @@ class Winspool < Base
   IDOK = 1
   IDCANCEL = 2
 
-  attach_function :EnumPrintersA, [ :long, :pointer, :long, :pointer, :long, :pointer, :pointer ], :long
-  attach_function :EnumPrintersW, [ :long, :pointer, :long, :pointer, :long, :pointer, :pointer ], :long
+  attach_function :EnumPrintersA, [ :long, :pointer, :long, :pointer, :long, :pointer, :pointer ], :int
+  attach_function :EnumPrintersW, [ :long, :pointer, :long, :pointer, :long, :pointer, :pointer ], :int
   def self.enum_printers(flags, name, level)
     pcbNeeded = FFI::MemoryPointer.new(:long)
     pcReturned = FFI::MemoryPointer.new(:long)
@@ -54,15 +54,14 @@ class Winspool < Base
     }
 
     #~ p "Laenge des übergebenen Puffers: #{cbBuf}"
-    needed = pcbNeeded.read_long
     returned = pcReturned.read_long
-#     puts "benoetigte Bytes: #{needed}"
+#     puts "benoetigte Bytes: #{pcbNeeded.read_long}"
 #     puts "zurueckgegebene Drucker: #{returned}"
 
     printers = (0...returned).map{|idx|
       case level
       when PRINTER_INFO_4
-        create_PRINTER_INFO_4(nil, pPrinterEnum + idx*PRINTER_INFO_4.size)
+        create_PRINTER_INFO_4(pPrinterEnum + idx*PRINTER_INFO_4_struct.size)
       else
         raise "unsupported printer info level #{level.inspect}"
       end
@@ -70,7 +69,7 @@ class Winspool < Base
     return printers
   end
 
-  class PRINTER_INFO_4 < FFI::Struct
+  class PRINTER_INFO_4_struct < FFI::Struct
     #   typedef self.struct _PRINTER_INFO_4 {
     #     LPTSTR pPrinterName;
     #     LPTSTR pServerName;
@@ -83,7 +82,7 @@ class Winspool < Base
   end
 
   def self.create_PRINTER_INFO_4(ptrdata=nil, size=nil)
-    PRINTER_INFO_4.new(ptrdata || (size && FFI::MemoryPointer.new(size)))
+    PRINTER_INFO_4_struct.new(ptrdata || (size && FFI::MemoryPointer.new(size)))
   end
 
 
@@ -96,8 +95,8 @@ class Winspool < Base
   #   __in   DWORD fMode
   # );
   #
-  attach_function :DocumentPropertiesW, [ :long, :long, :pointer, :pointer, :pointer, :long ], :long
-  attach_function :DocumentPropertiesA, [ :long, :long, :pointer, :pointer, :pointer, :long ], :long
+  attach_function :DocumentPropertiesW, [ :handle, :handle, :pointer, :pointer, :pointer, :uint32 ], :long
+  attach_function :DocumentPropertiesA, [ :handle, :handle, :pointer, :pointer, :pointer, :uint32 ], :long
   def self.document_properties(hWnd, hPrinter, deviceName, devModeInput, mode)
     # erst einmal ermitteln, wieviel Speicher gebraucht wird
     bufsize = exception_for_negative{
@@ -137,28 +136,25 @@ class Winspool < Base
   end
   #-----------------------------------------------------------------------------------------------------------------
 
-  attach_function :ClosePrinter, [ :long ], :long
+  attach_function :ClosePrinter, [ :handle ], :int
   def self.close_printer(hPrinter)
-    check(hPrinter,Integer)
     exception_for_0{
       ClosePrinter(hPrinter)
     }
   end
   #-----------------------------------------------------------------------------------------------------------------
 
-  attach_function :AbortPrinter, [ :long ], :long
+  attach_function :AbortPrinter, [ :handle ], :int
   def self.abort_printer(hPrinter)
-    check(hPrinter,Integer)
     exception_for_0{
       AbortPrinter(hPrinter)
     }
   end
   #-----------------------------------------------------------------------------------------------------------------
 
-  attach_function :StartDocPrinterA, [ :long, :long, :pointer ], :long
-  attach_function :StartDocPrinterW, [ :long, :long, :pointer ], :long
+  attach_function :StartDocPrinterA, [ :handle, :uint32, :pointer ], :uint32
+  attach_function :StartDocPrinterW, [ :handle, :uint32, :pointer ], :uint32
   def self.start_doc_printer(hPrinter, level, pDocInfo)
-    check(hPrinter, Integer);
     check(level, Integer);
 #    check(pDocInfo, String)
     exception_for_0{
@@ -168,35 +164,32 @@ class Winspool < Base
   end
   #-----------------------------------------------------------------------------------------------------------------
 
-  attach_function :EndDocPrinter, [ :long ], :long
+  attach_function :EndDocPrinter, [ :handle ], :int
   def self.end_doc_printer(hPrinter)
-    check(hPrinter, Integer)
     exception_for_0{
       EndDocPrinter(hPrinter)
     }
   end
   #-----------------------------------------------------------------------------------------------------------------
 
-  attach_function :StartPagePrinter, [ :long ], :long
+  attach_function :StartPagePrinter, [ :handle ], :int
   def self.start_page_printer(hPrinter)
-    check(hPrinter, Integer)
     exception_for_0{
       StartPagePrinter(hPrinter)
     }
   end
   #-----------------------------------------------------------------------------------------------------------------
 
-  attach_function :EndPagePrinter, [ :long ], :long
-  EndPagePrinter = WINSPOOL['EndPagePrinter', 'LL']
+  attach_function :EndPagePrinter, [ :handle ], :int
   def self.end_page_printer(hPrinter)
-    check(hPrinter, Integer)
     exception_for_0{
       EndPagePrinter(hPrinter)
     }
   end
   #-----------------------------------------------------------------------------------------------------------------
 
-  attach_function :GetPrinter, [ :long, :long, :pointer, :long, :pointer ], :long
+  attach_function :GetPrinterA, [ :handle, :uint32, :pointer, :uint32, :pointer ], :int
+  attach_function :GetPrinterW, [ :handle, :uint32, :pointer, :uint32, :pointer ], :int
   def self.get_printer(hPrinter, level, pPrinter, cbBuf, pcbNeeded)
     #~ BOOL GetPrinter(
       #~ __in   HANDLE hPrinter,
@@ -206,20 +199,21 @@ class Winspool < Base
       #~ __out  LPDWORD pcbNeeded
     #~ );
     #~ exception_for_0{
-      GetPrinter(hPrinter, level, pPrinter, cbBuf, pcbNeeded)
+      args = hPrinter, level, pPrinter, cbBuf, pcbNeeded
+      unicode ? GetPrinterW(*args) : GetPrinterA(*args)
     #~ }
   end
 
 #-----------------------------------------------------------------------------------------------------------------
 
-  attach_function :WritePrinter, [ :long, :pointer, :uint32, :pointer ], :long
+  attach_function :WritePrinter, [ :handle, :pointer, :uint32, :pointer ], :int
 	def self.write_printer(hPrinter, pBuf)
-	#~ BOOL WritePrinter(
-  #~ __in   HANDLE hPrinter,
-  #~ __in   LPVOID pBuf,
-  #~ __in   DWORD cbBuf,
-  #~ __out  LPDWORD pcWritten
-#~ );
+    #~ BOOL WritePrinter(
+    #~ __in   HANDLE hPrinter,
+    #~ __in   LPVOID pBuf,
+    #~ __in   DWORD cbBuf,
+    #~ __out  LPDWORD pcWritten
+    #~ );
 		pcWritten = FFI::MemoryPointer.new :uint32
     exception_for_0{
       WritePrinter(hPrinter, pBuf, pBuf.length, pcWritten)
@@ -279,7 +273,7 @@ class Winspool < Base
       :dmReserved1, :uint32,
       :dmReserved2, :uint32,
       :dmPanningWidth, :uint32,
-      :dmPanningHeight :uint32
+      :dmPanningHeight, :uint32
   end
 
   class DEVMODA < FFI::Struct
@@ -316,7 +310,7 @@ class Winspool < Base
       :dmReserved1, :uint32,
       :dmReserved2, :uint32,
       :dmPanningWidth, :uint32,
-      :dmPanningHeight :uint32
+      :dmPanningHeight, :uint32
   end
 
   def self.create_DEVMOD(ptrdata=nil, size=nil)

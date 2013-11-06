@@ -18,6 +18,7 @@ module AbstractMemoryExtensions
     # Converts the Data containing a Unicode or Ansi-Text based on the current
     # Win32api4ruby::Base.unicode setting to UTF-8.
     def to_s_utf8
+      return nil if null?
       if Win32api4ruby::Base.unicode
         @@iconv_Utf16ToUtf8 ||= Iconv.new('utf-8', 'utf-16le')
         @@iconv_Utf16ToUtf8.iconv to_s_utf16
@@ -28,6 +29,7 @@ module AbstractMemoryExtensions
     end
   else
     def to_s_utf8
+      return nil if null?
       if Win32api4ruby::Base.unicode
         to_s_utf16.encode(Encoding::UTF_8, Encoding::UTF_16LE)
       else
@@ -92,14 +94,14 @@ class Base
   def self.exception_for_0
     delete_errors
     res = yield
-    raise_last_error if res == 0
+    raise_last_error if res.to_i == 0
     return res
   end
 
   def self.exception_for_non_0
     delete_errors
     res = yield
-    raise_last_error if res != 0
+    raise_last_error if res.to_i != 0
     return res
   end
 
@@ -108,7 +110,7 @@ class Base
     res = yield
     if res != 0
       text = case
-        when (res&0xffff0000) == 0x80070000 then `net helpmsg #{res&0xffff}`.strip
+        when (res.to_i&0xffff0000) == 0x80070000 then `net helpmsg #{res.to_i&0xffff}`.strip
         else get_last_error_text
       end
       raise ApiError, sprintf('%#x %s', res, text)
@@ -135,8 +137,8 @@ class Base
     message = FFI::MemoryPointer.new(1024) #store 1kb space
     error_code ||= Kernel.get_last_error()
     Kernel.format_message(0x1000, '', error_code, 0, message, message.size, '')
-    message = unicode ? message.to_s_utf8 : message.to_s
-    sprintf('%s (%d)', message.chomp, error_code)
+    message_str = message.to_s_utf8
+    sprintf('%s (%d)', message_str.chomp, error_code)
   end
   def self.raise_last_error
     code = Kernel.get_last_error()
@@ -181,5 +183,9 @@ class Base
 
     data || FFI::MemoryPointer.new(size)
   end
+  
+  FFI.typedef :pointer, :handle
+  FFI.typedef :intptr_t, :lresult
+  
 end
 end

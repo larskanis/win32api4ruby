@@ -44,8 +44,8 @@ class User < Base
   # different arguments are calling different functions, throwing wacky errors
   #API WRAPPERS
   # --------------------------------------------------------------------------------------------------------------
-  attach_function :LoadImageW, [ :long, :pointer, :uint, :int, :int, :uint ], :long
-  attach_function :LoadImageA, [ :long, :pointer, :uint, :int, :int, :uint ], :long
+  attach_function :LoadImageW, [ :handle, :pointer, :uint, :int, :int, :uint ], :handle
+  attach_function :LoadImageA, [ :handle, :pointer, :uint, :int, :int, :uint ], :handle
   def self.load_image(hinst, lpszName, uType, cxDesired, cyDesired, fuLoad)
       #~ HANDLE LoadImage(
           #~ HINSTANCE hinst,
@@ -62,8 +62,8 @@ class User < Base
   end
   #--------------------------------------------------------------------------------------------------------------
 
-  attach_function :DrawTextW, [ :long, :pointer, :int, :pointer, :uint ], :int
-  attach_function :DrawTextA, [ :long, :pointer, :int, :pointer, :uint ], :int
+  attach_function :DrawTextW, [ :handle, :pointer, :int, :pointer, :uint ], :int
+  attach_function :DrawTextA, [ :handle, :pointer, :int, :pointer, :uint ], :int
   def self.draw_text(hdc, lpchText, nCount, lpRect, uFormat)
       #~ int DrawText(
         #~ __in     HDC hDC,
@@ -79,8 +79,8 @@ class User < Base
   end
   #--------------------------------------------------------------------------------------------------------------
 
-  attach_function :CallWindowProcW, [ :pointer, :long, :uint, :int, :int ], :long
-  attach_function :CallWindowProcA, [ :pointer, :long, :uint, :int, :int ], :long
+  attach_function :CallWindowProcW, [ :pointer, :handle, :uint, :int, :int ], :lresult
+  attach_function :CallWindowProcA, [ :pointer, :handle, :uint, :int, :int ], :lresult
   def self.call_window_proc(lpPrevWndFunc, hWnd, msg, wParam, lParam)
       #~ LRESULT CallWindowProc(
           #~ WNDPROC lpPrevWndFunc,
@@ -94,8 +94,8 @@ class User < Base
   end
   #--------------------------------------------------------------------------------------------------------------
 
-  attach_function :SetWindowLongW, [ :long, :int, :long ], :long
-  attach_function :SetWindowLongA, [ :long, :int, :long ], :long
+  attach_function :SetWindowLongW, [ :handle, :int, :long ], :long
+  attach_function :SetWindowLongA, [ :handle, :int, :long ], :long
   def self.set_window_long(hWnd, nIndex, dwNewLong)
       #~ LONG SetWindowLong(
           #~ HWND hWnd,
@@ -108,8 +108,8 @@ class User < Base
     }
   end
 
-  attach_function :CreateWindowExW, [ :uint32, :pointer, :pointer, :uint32, :int, :int, :int, :int, :long, :long, :long, :pointer ], :long
-  attach_function :CreateWindowExA, [ :uint32, :pointer, :pointer, :uint32, :int, :int, :int, :int, :long, :long, :long, :pointer ], :long
+  attach_function :CreateWindowExW, [ :uint32, :pointer, :pointer, :uint32, :int, :int, :int, :int, :handle, :handle, :handle, :pointer ], :handle
+  attach_function :CreateWindowExA, [ :uint32, :pointer, :pointer, :uint32, :int, :int, :int, :int, :handle, :handle, :handle, :pointer ], :handle
   def self.create_window_ex(dwExStyle, lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam=nil)
     #~ HWND CreateWindow(
         #~ DWORD dwExStyle,
@@ -131,14 +131,14 @@ class User < Base
     }
   end
 
-  attach_function :UpdateWindow, [ :long ], :long
+  attach_function :UpdateWindow, [ :handle ], :int
   def self.update_window(hwnd)
     exception_for_0{
       UpdateWindow(hwnd)
     }
   end
 
-  attach_function :DestroyWindow, [ :long ], :long
+  attach_function :DestroyWindow, [ :handle ], :int
   def self.destroy_window(hwnd)
     exception_for_0{
       DestroyWindow(hwnd)
@@ -147,8 +147,8 @@ class User < Base
 
   #~ {GetMessage will return True until it gets a WM_OUIT message.
   #~ So this program will keep running untill you Post a Quit Message}
-  attach_function :GetMessageW, [ :pointer, :long, :long, :long ], :long
-  attach_function :GetMessageA, [ :pointer, :long, :long, :long ], :long
+  attach_function :GetMessageW, [ :pointer, :handle, :long, :long ], :int
+  attach_function :GetMessageA, [ :pointer, :handle, :long, :long ], :int
   def self.get_message(lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax)
     exception_for_0{
       args = lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax
@@ -157,7 +157,7 @@ class User < Base
   end
 
   #~ {Translate any WM_KEYDOWN keyboard Msg to a WM_CHAR message}
-  attach_function :TranslateMessage, [ :pointer ], :long
+  attach_function :TranslateMessage, [ :pointer ], :int
   def self.translate_message(msg)
     TranslateMessage(msg)
   end
@@ -165,13 +165,13 @@ class User < Base
   #~ {this Sends Msg to the address of the
   #~ "Window Procedure" set in the Resistered
   #~ Window's Class for that window}
-  attach_function :DispatchMessageW, [ :pointer ], :long
-  attach_function :DispatchMessageA, [ :pointer ], :long
+  attach_function :DispatchMessageW, [ :pointer ], :lresult
+  attach_function :DispatchMessageA, [ :pointer ], :lresult
   def self.dispatch_message(msg)
     unicode ? DispatchMessageW(msg) : DispatchMessageA(msg)
   end
 
-  attach_function :GetDC, [ :long ], :long
+  attach_function :GetDC, [ :handle ], :handle
   def self.get_dc(hWnd)
     exception_for_0{
       GetDC(hWnd)

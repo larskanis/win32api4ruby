@@ -12,17 +12,17 @@ module TestComdlg
     pdlg[:Flags] = Comdlg::PD_RETURNDC | Comdlg::PD_NOSELECTION
     ok = Comdlg.print_dlg(pdlg)
 
-    puts "res: #{ok.to_s(16)} pdlg: #{pdlg.inspect}"
+    puts "res: #{ok.to_s(16)}" # pdlg: #{pdlg.values}"
     hDevNames = pdlg[:hDevNames]
     Kernel.with_global_lock(hDevNames){|pDevNames|
-      dn_prt = create_DEVNAMES(pDevNames)
+      dn_prt = Comdlg.create_DEVNAMES(pDevNames)
 
       u = Base.unicode ? 2 : 1
-      driver = FFI::MemoryPointer.new(pDevNames+dn_prt[:wDriverOffset]*u).to_s_utf8
-      device = FFI::MemoryPointer.new(pDevNames+dn_prt[:wDeviceOffset]*u).to_s_utf8
-      output = FFI::MemoryPointer.new(pDevNames+dn_prt[:wOutputOffset]*u).to_s_utf8
-      default = FFI::MemoryPointer.new(pDevNames+dn_prt[:wDefault]*u).to_s_utf8
-      puts "Driver: #{driver} Device: #{device} Output: #{output} Default: #{default}"
+      driver = FFI::Pointer.new(pDevNames+dn_prt[:wDriverOffset]*u).to_s_utf8
+      device = FFI::Pointer.new(pDevNames+dn_prt[:wDeviceOffset]*u).to_s_utf8
+      output = FFI::Pointer.new(pDevNames+dn_prt[:wOutputOffset]*u).to_s_utf8
+      default = FFI::Pointer.new(pDevNames+dn_prt[:wDefault]*u).to_s_utf8
+      puts "Driver: #{driver.inspect} Device: #{device.inspect} Output: #{output.inspect} Default: #{default.inspect}"
     }
   end
 end

@@ -11,7 +11,7 @@ module TestWinspool
     level = 4
     infos = Winspool.enum_printers(flags, name, level)
     infos[0..1].each{|info|
-      puts "PrinterName: #{info[:pPrinterName].to_s_utf8 if info[:pPrinterName]}, ServerName: #{info[:pServerName].to_s_utf8 if info[:pServerName]}, Attributes: #{info[:Attributes]}"
+      puts "PrinterName: #{info[:pPrinterName].to_s_utf8}, ServerName: #{info[:pServerName].to_s_utf8}, Attributes: #{info[:Attributes]}"
     }
   end
 
@@ -23,7 +23,7 @@ module TestWinspool
     info = infos[0]
 
     if info
-      devmod = Winspool.document_properties 0, 0, info[:pPrinterName], nil, Winspool::DM_OUT_BUFFER
+      devmod = Winspool.document_properties nil, nil, info[:pPrinterName], nil, Winspool::DM_OUT_BUFFER
       assert devmod.size > 10
       assert_operator 50..10000, :===, devmod[:dmYResolution]
       assert_operator 50..10000, :===, devmod[:dmPrintQuality]

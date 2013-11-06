@@ -12,23 +12,20 @@ class Kernel  < Base
   # (through #check). This is to be consistent with the Win32API which will assume
   # different arguments are calling different functions, throwing wacky errors
   #API WRAPPERS
-  attach_function :GlobalLock, [ :long ], :long
+  attach_function :GlobalLock, [ :handle ], :pointer
   def self.global_lock(hMovableMemory)
-    check(hMovableMemory,Integer)
     exception_for_0{
       GlobalLock(hMovableMemory)
     }
   end
 
-  attach_function :GlobalUnlock, [ :long ], :long
+  attach_function :GlobalUnlock, [ :handle ], :long
   def self.global_unlock(hMovableMemory)
-    check(hMovableMemory,Integer)
     GlobalUnlock(hMovableMemory)
   end
 
-  attach_function :GlobalFree, [ :long ], :long
+  attach_function :GlobalFree, [ :handle ], :handle
   def self.global_free(hMovableMemory)
-    check(hMovableMemory,Integer)
     exception_for_non_0{
       GlobalFree(hMovableMemory)
     }
