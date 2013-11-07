@@ -168,20 +168,21 @@ class Base
     Kernel.set_last_error(0)
   end
 
-  def self.prepare_PtrData(data=nil, size=nil)
-    raise "neither data nor size given" unless data || size
-
-    data = case data
+  def self.create_struct(struct, data_or_size=nil)
+    case data_or_size
       when String
-        FFI::MemoryPointer.from_string(data)
+        struct.new(FFI::MemoryPointer.from_string(data_or_size))
       when FFI::AbstractMemory
-        data
+        struct.new(data_or_size)
+      when Integer
+        struct.new(FFI::MemoryPointer.new(data_or_size))
       when NilClass
+        struct.new
+      when struct
+        struct
       else
-        raise "#{data.class} instead of String or FFI::AbstractMemory"
+        raise "#{data_or_size.class} instead of String, FFI::AbstractMemory or Integer"
     end
-
-    data || FFI::MemoryPointer.new(size)
   end
   
   FFI.typedef :pointer, :handle

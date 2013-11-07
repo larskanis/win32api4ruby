@@ -60,9 +60,9 @@ class Comdlg < Base
         :hSetupTemplate, :handle
   end
 
-  def self.create_PRINTDLG(ptrdata=nil, size=nil)
-    data = PRINTDLG.new(ptrdata || (size && FFI::MemoryPointer.new(size)))
-    data[:lStructSize] = PRINTDLG.size
+  def self.create_PRINTDLG(data_or_size=nil)
+    data = create_struct(PRINTDLG, data_or_size)
+    data[:lStructSize] = data.pointer.size
     return data
   end
 
@@ -123,9 +123,9 @@ class Comdlg < Base
       :hPageSetupTemplate, :handle
   end
 
-  def self.create_PAGESETUPDLG(ptrdata=nil, size=nil)
-    data = PAGESETUPDLG.new(ptrdata || (size && FFI::MemoryPointer.new(size)))
-    data[:lStructSize] = PAGESETUPDLG.size
+  def self.create_PAGESETUPDLG(data_or_size=nil)
+    data = create_struct(PAGESETUPDLG, data_or_size)
+    data[:lStructSize] = data.pointer.size
     return data
   end
 
@@ -152,9 +152,9 @@ class Comdlg < Base
       :nStartPage, :uint32,
       :dwResultAction, :uint32
   end
-  def self.create_PRINTDLGEX(ptrdata=nil, size=nil)
-    data = PRINTDLGEX.new(ptrdata || (size && FFI::MemoryPointer.new(size)))
-    data[:lStructSize] = PRINTDLGEX.size
+  def self.create_PRINTDLGEX(data_or_size=nil)
+    data = create_struct(PRINTDLGEX, data_or_size)
+    data[:lStructSize] = data.pointer.size
     return data
   end
 
@@ -170,8 +170,8 @@ class Comdlg < Base
         :wOutputOffset, :uint16,
         :wDefault, :uint16
   end
-  def self.create_DEVNAMES(ptrdata=nil, size=nil)
-    DEVNAMES.new(ptrdata || (size && FFI::MemoryPointer.new(size)))
+  def self.create_DEVNAMES(data_or_size=nil)
+    create_struct(DEVNAMES, data_or_size)
   end
 
 

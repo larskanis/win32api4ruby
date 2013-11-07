@@ -81,8 +81,8 @@ class Winspool < Base
       :Attributes, :uint32
   end
 
-  def self.create_PRINTER_INFO_4(ptrdata=nil, size=nil)
-    PRINTER_INFO_4_struct.new(ptrdata || (size && FFI::MemoryPointer.new(size)))
+  def self.create_PRINTER_INFO_4(data_or_size=nil)
+    create_struct(PRINTER_INFO_4_struct, data_or_size)
   end
 
 
@@ -105,7 +105,7 @@ class Winspool < Base
     }
 
     # und dann die Infos holen
-    pDevModeOutput = create_DEVMOD(nil, bufsize)
+    pDevModeOutput = create_DEVMOD(bufsize)
     res = exception_for_negative{
       args = hWnd, hPrinter, deviceName, pDevModeOutput, devModeInput, mode
       unicode ? DocumentPropertiesW(*args) : DocumentPropertiesA(*args)
@@ -233,8 +233,8 @@ class Winspool < Base
       :pDatatype, :pointer
   end
 
-	def self.create_DOC_INFO_1(ptrdata=nil, size=nil)
-    (unicode ? DOC_INFO_1W : DOC_INFO_1A).new(ptrdata || (size && FFI::MemoryPointer.new(size)))
+	def self.create_DOC_INFO_1(data_or_size=nil)
+    create_struct(unicode ? DOC_INFO_1W : DOC_INFO_1A, data_or_size)
 	end
 
 #-----------------------------------------------------------------------------------------------------------------
@@ -313,8 +313,8 @@ class Winspool < Base
       :dmPanningHeight, :uint32
   end
 
-  def self.create_DEVMOD(ptrdata=nil, size=nil)
-    (unicode ? DEVMODW : DEVMODA).new(ptrdata || (size && FFI::MemoryPointer.new(size)))
+  def self.create_DEVMOD(data_or_size=nil)
+    create_struct(unicode ? DEVMODW : DEVMODA, data_or_size)
   end
 end
 end

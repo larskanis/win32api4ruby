@@ -359,9 +359,9 @@ class Gdi < Base
       :biClrImportant, :uint32
   end
 
-  def self.create_BITMAPINFOHEADER(ptrdata=nil, size=nil)
-    ptrdata = BITMAPINFOHEADER.new(ptrdata || (size && FFI::MemoryPointer.new(size)))
-    ptrdata[:biSize] = ptrdata.size
+  def self.create_BITMAPINFOHEADER(data_or_size=nil)
+    ptrdata = create_struct(BITMAPINFOHEADER, data_or_size)
+    ptrdata[:biSize] = ptrdata.pointer.size
     return ptrdata
   end
 
@@ -380,9 +380,9 @@ class Gdi < Base
       :fwType, :uint32
   end
 
-  def self.create_DOCINFO(ptrdata=nil, size=nil)
-    ptrdata = DOCINFO.new(ptrdata || (size && FFI::MemoryPointer.new(size)))
-    ptrdata[:cbSize] = ptrdata.size
+  def self.create_DOCINFO(data_or_size=nil)
+    ptrdata = create_struct(DOCINFO, data_or_size)
+    ptrdata[:cbSize] = ptrdata.pointer.size
     return ptrdata
   end
 end

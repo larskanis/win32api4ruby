@@ -56,7 +56,7 @@ module TestGdi
 
     documentName = "Test Escape"
     docinfo = Win32api4ruby::Gdi.create_DOCINFO
-    docinfo[:lpszDocName] = Win32api4ruby::Base.prepare_PtrData(documentName.to_s_win32)
+    docinfo[:lpszDocName] = documentName.to_s_win32
 		Gdi.start_doc(hPrinter, docinfo)
 
 		send_escape(hPrinter, "MCL")
