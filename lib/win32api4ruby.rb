@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
 
 module Win32api4ruby
-  VERSION = '0.2.0'
+  VERSION = '0.2.1'
 
   autoload 'Base', 'win32api4ruby/base'
   autoload 'Comdlg', 'win32api4ruby/comdlg'
