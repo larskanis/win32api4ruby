@@ -55,8 +55,8 @@ class Base
     end
   end
 
-  # use ansi-methods by default
-  @@unicode = false
+  # use UNICODE-methods by default
+  @@unicode = true
 
   def self.unicode=(enabled)
     @@unicode = !!enabled
