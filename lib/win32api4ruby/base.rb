@@ -14,51 +14,26 @@ module AbstractMemoryExtensions
     self.get_bytes(0,i)
   end
 
-  if RUBY_VERSION<'1.9'
-    # Converts the Data containing a Unicode or Ansi-Text based on the current
-    # Win32api4ruby::Base.unicode setting to UTF-8.
-    def to_s_utf8
-      return nil if null?
-      if Win32api4ruby::Base.unicode
-        @@iconv_Utf16ToUtf8 ||= Iconv.new('utf-8', 'utf-16le')
-        @@iconv_Utf16ToUtf8.iconv to_s_utf16
-      else
-        @@iconv_AnsiToUtf8 ||= Iconv.new('utf-8', 'windows-1252')
-        @@iconv_AnsiToUtf8.iconv to_s
-      end
-    end
-  else
-    def to_s_utf8
-      return nil if null?
-      if Win32api4ruby::Base.unicode
-        to_s_utf16.encode(Encoding::UTF_8, Encoding::UTF_16LE)
-      else
-        get_string(0).encode(Encoding::UTF_8, Encoding::Windows_1252)
-      end
+  # Converts the Data containing a Unicode or Ansi-Text based on the current
+  # Win32api4ruby::Base.unicode setting to UTF-8.
+  def to_s_utf8
+    return nil if null?
+    if Win32api4ruby::Base.unicode
+      to_s_utf16.encode(Encoding::UTF_8, Encoding::UTF_16LE)
+    else
+      get_string(0).encode(Encoding::UTF_8, Encoding::Windows_1252)
     end
   end
 end
 
 module StringExtensions
-  if RUBY_VERSION<'1.9'
-    # Converts a UTF-8 string to Windows-encoding based on the current
-    # Win32api4ruby::Base.unicode setting.
-    def to_s_win32
-      if Win32api4ruby::Base.unicode
-        @@iconv_Utf8ToUtf16 ||= Iconv.new('utf-16le', 'utf-8')
-        @@iconv_Utf8ToUtf16.iconv(self) << AbstractMemoryExtensions::ZeroZeroString
-      else
-        @@iconv_Utf8ToAnsi ||= Iconv.new('windows-1252', 'utf-8')
-        @@iconv_Utf8ToAnsi.iconv(self)
-      end
-    end
-  else
-    def to_s_win32
-      if Win32api4ruby::Base.unicode
-        FFI::MemoryPointer.from_string (self+"\0").encode(Encoding::UTF_16LE, Encoding::UTF_8)
-      else
-        FFI::MemoryPointer.from_string self.encode(Encoding::Windows_1252, Encoding::UTF_8)
-      end
+  # Converts a UTF-8 string to Windows-encoding based on the current
+  # Win32api4ruby::Base.unicode setting.
+  def to_s_win32
+    if Win32api4ruby::Base.unicode
+      FFI::MemoryPointer.from_string (self+"\0").encode(Encoding::UTF_16LE, Encoding::UTF_8)
+    else
+      FFI::MemoryPointer.from_string self.encode(Encoding::Windows_1252, Encoding::UTF_8)
     end
   end
 end
@@ -184,9 +159,9 @@ class Base
         raise "#{data_or_size.class} instead of String, FFI::AbstractMemory or Integer"
     end
   end
-  
+
   FFI.typedef :pointer, :handle
   FFI.typedef :intptr_t, :lresult
-  
+
 end
 end
