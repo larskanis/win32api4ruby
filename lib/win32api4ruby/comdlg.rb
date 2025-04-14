@@ -38,7 +38,7 @@ class Comdlg < Base
 
   #~ PRINTDLG_types = "L"*2 + "L"*2 + "L"*2 + "H"*5 + "L"*8
   class PRINTDLG < FFI::Struct
-    packed unless RUBY_PLATFORM =~ /x64/
+    packed if RUBY_PLATFORM =~ /i?86/
     layout :lStructSize, :uint32,
         :hwndOwner, :handle,
         :hDevMode, :handle,
