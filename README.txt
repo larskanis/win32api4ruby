@@ -1,6 +1,6 @@
 = win32api4ruby
 
-* http://comdb1/projektverwaltung/projects/win32api4ruby
+* https://github.com/larskanis/win32api4ruby
 
 == DESCRIPTION:
 
@@ -18,6 +18,10 @@ Yet another win32 to ruby wrapper
 * not compatible to win32-gems for Ruby
 * only a small subset of DLL-functions implemented
 
+== INSTALL:
+
+* gem install win32api4ruby
+
 == SYNOPSIS:
 
 short exsample:
@@ -31,16 +35,9 @@ short exsample:
 
 * based on FFI
 
-== INSTALL:
-
-* download win32api4ruby-X.Y.Z.gem
-* gem install -l win32api4ruby
-
 == LICENSE:
 
 (The MIT License)
-
-Copyright (c) 2009 FIX
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
