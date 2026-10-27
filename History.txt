@@ -1,3 +1,8 @@
+=== 0.2.2 / 2026-10-27
+
+* Make the gem open source.
+
+
 === 1.0.0 / 2009-12-18
 
 * 1 major enhancement
